@@ -1,0 +1,101 @@
+products:
+  - name: Free Plan
+    description: Basic features for individuals
+    metadata:
+      key: free
+      features:
+        - Core feature 1
+        - Core feature 2
+      highlight: false
+
+  - name: Pro Plan
+    description: Advanced features for professionals
+    metadata:
+      key: pro
+      features:
+        - Core feature 1
+        - Core feature 2
+        - Pro feature 1
+        - Pro feature 2
+      highlight: true
+
+  - name: Enterprise Plan
+    description: Complete solution for businesses
+    metadata:
+      key: enterprise
+      features:
+        - Core feature 1
+        - Core feature 2
+        - Pro feature 1
+        - Pro feature 2
+        - Enterprise feature 1
+        - Enterprise feature 2
+      highlight: false
+
+prices:
+  - nickname: Free Monthly
+    unit_amount: 0
+    currency: usd
+    type: recurring
+    active: true
+    product_well_known_id: free
+    recurring:
+      interval: month
+      interval_count: 1
+    metadata:
+      plan_code: free_monthly
+      tier: free
+
+  - nickname: Pro Monthly
+    unit_amount: 1999
+    currency: usd
+    type: recurring
+    active: true
+    product_well_known_id: pro
+    recurring:
+      interval: month
+      interval_count: 1
+    metadata:
+      plan_code: pro_monthly
+      tier: pro
+
+  - nickname: Pro Annual
+    unit_amount: 19990
+    currency: usd
+    type: recurring
+    active: true
+    product_well_known_id: pro
+    recurring:
+      interval: year
+      interval_count: 1
+    metadata:
+      plan_code: pro_annual
+      tier: pro
+      discount: "20%"
+
+  - nickname: Enterprise Monthly
+    unit_amount: 4999
+    currency: usd
+    type: recurring
+    active: true
+    product_well_known_id: enterprise
+    recurring:
+      interval: month
+      interval_count: 1
+    metadata:
+      plan_code: enterprise_monthly
+      tier: enterprise
+
+  - nickname: Enterprise Annual
+    unit_amount: 49990
+    currency: usd
+    type: recurring
+    active: true
+    product_well_known_id: enterprise
+    recurring:
+      interval: year
+      interval_count: 1
+    metadata:
+      plan_code: enterprise_annual
+      tier: enterprise
+      discount: "20%"

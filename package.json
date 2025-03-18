@@ -1,0 +1,39 @@
+{
+  "name": "stripe-pac",
+  "version": "0.1.0",
+  "description": "Prices as Code (PaC) for Stripe - Define your Stripe products and prices in YAML",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "type": "module",
+  "bin": {
+    "stripe-pac": "lib/cli.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "stripe",
+    "prices",
+    "products",
+    "yaml",
+    "pac",
+    "infrastructure-as-code"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "dotenv": "^16.3.1",
+    "js-yaml": "^4.1.0",
+    "stripe": "^14.12.0"
+  },
+  "devDependencies": {
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^20.11.0",
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=16"
+  }
+}
