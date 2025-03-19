@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Custom Providers - Prices as Code</title>
+    <meta name="description" content="Extend Prices as Code with custom payment providers">
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="icon" href="https://raw.githubusercontent.com/wickdninja/assets/refs/heads/main/PaC.webp">
+</head>
+<body>
+    <header class="site-header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <a href="../index.html">
+                        <img src="https://raw.githubusercontent.com/wickdninja/assets/refs/heads/main/PaC.webp" alt="Prices as Code" width="40">
+                        <span>Prices as Code</span>
+                    </a>
+                </div>
+                <nav class="main-nav">
+                    <ul>
+                        <li><a href="index.html">Guides</a></li>
+                        <li><a href="../api/index.html">API</a></li>
+                        <li><a href="../providers/index.html">Providers</a></li>
+                        <li><a href="https://github.com/wickdninja/prices-as-code" target="_blank">GitHub</a></li>
+                        <li><a href="https://www.npmjs.com/package/prices-as-code" target="_blank">NPM</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main class="content">
+        <div class="container">
+            <h1>Custom Providers</h1>
+
+            <p>While Prices as Code comes with built-in support for popular payment providers like Stripe and Recurly, you might need to integrate with other payment providers or custom systems. This guide explains how to create custom provider integrations.</p>
+
+            <h2>Provider Interface</h2>
+
+            <p>Every provider in Prices as Code must implement the Provider interface, which defines the methods needed to synchronize products and prices:</p>
+
+            <div class="highlight">
+                <pre><code class="language-typescript">interface Provider {
+  // Unique identifier for the provider
+  readonly name: string;
+  
+  // Initialize the provider with options
+  initialize(options: any): Promise<void>;
+  
+  // Fetch existing products from the provider
+  fetchProducts(): Promise<Product[]>;
+  
+  // Fetch existing prices from the provider
+  fetchPrices(): Promise<Price[]>;
+  
+  // Create a new product
+  createProduct(product: Product): Promise<Product>;
+  
+  // Update an existing product
+  updateProduct(product: Product): Promise<Product>;
+  
+  // Create a new price
+  createPrice(price: Price): Promise<Price>;
+  
+  // Update an existing price
+  updatePrice(price: Price): Promise<Price>;
+  
+  // Additional methods as needed
+}</code></pre>
+            </div>
+
+            <h2>Creating a Custom Provider</h2>
+
+            <p>Here's how to create a custom provider implementation for a fictional payment system called "PaymentX":</p>
+
+            <div class="highlight">
+                <pre><code class="language-typescript">import { Provider, Product, Price } from 'prices-as-code';
+// Assuming you have a PaymentX SDK
+import { PaymentXClient } from 'paymentx-sdk';
+
+// Define the options interface for your provider
+interface PaymentXOptions {
+  apiKey: string;
+  baseUrl?: string;
+}
+
+export class PaymentXProvider implements Provider {
+  // Provider name
+  readonly name = 'paymentx';
+  
+  // PaymentX client instance
+  private client: PaymentXClient | null = null;
+  
+  // Initialize the provider with options
+  async initialize(options: PaymentXOptions): Promise<void> {
+    if (!options.apiKey) {
+      throw new Error('PaymentX API key is required');
+    }
+    
+    this.client = new PaymentXClient({
+      apiKey: options.apiKey,
+      baseUrl: options.baseUrl || 'https://api.paymentx.com',
+    });
+    
+    // Test the connection
+    await this.client.test();
+  }
+  
+  // Fetch existing products from PaymentX
+  async fetchProducts(): Promise<Product[]> {
+    if (!this.client) {
+      throw new Error('Provider not initialized');
+    }
+    
+    // Fetch products from PaymentX
+    const paymentXProducts = await this.client.products.list();
+    
+    // Map PaymentX products to Prices as Code products
+    return paymentXProducts.map(product => ({
+      provider: this.name,
+      id: product.id,
+      name: product.name,
+      description: product.description,
+      // Map other fields as needed
+      metadata: product.metadata || {},
+    }));
+  }
+  
+  // Fetch existing prices from PaymentX
+  async fetchPrices(): Promise<Price[]> {
+    if (!this.client) {
+      throw new Error('Provider not initialized');
+    }
+    
+    // Fetch prices from PaymentX
+    const paymentXPrices = await this.client.prices.list();
+    
+    // Map PaymentX prices to Prices as Code prices
+    return paymentXPrices.map(price => ({
+      provider: this.name,
+      id: price.id,
+      name: price.name,
+      nickname: price.nickname || price.name,
+      unitAmount: price.amount,
+      currency: price.currency,
+      type: price.recurring ? 'recurring' : 'one_time',
+      recurring: price.recurring ? {
+        interval: price.recurring.interval,
+        intervalCount: price.recurring.interval_count,
+      } : undefined,
+      productId: price.product_id,
+      metadata: price.metadata || {},
+    }));
+  }
+  
+  // Create a new product in PaymentX
+  async createProduct(product: Product): Promise<Product> {
+    if (!this.client) {
+      throw new Error('Provider not initialized');
+    }
+    
+    // Create product in PaymentX
+    const paymentXProduct = await this.client.products.create({
+      name: product.name,
+      description: product.description || '',
+      // Other fields as needed by PaymentX
+      metadata: product.metadata || {},
+    });
+    
+    // Return the created product with the assigned ID
+    return {
+      ...product,
+      id: paymentXProduct.id,
+    };
+  }
+  
+  // Update an existing product in PaymentX
+  async updateProduct(product: Product): Promise<Product> {
+    if (!this.client) {
+      throw new Error('Provider not initialized');
+    }
+    
+    if (!product.id) {
+      throw new Error('Product ID is required for updates');
+    }
+    
+    // Update product in PaymentX
+    const paymentXProduct = await this.client.products.update(product.id, {
+      name: product.name,
+      description: product.description || '',
+      // Other fields as needed by PaymentX
+      metadata: product.metadata || {},
+    });
+    
+    // Return the updated product
+    return {
+      ...product,
+      id: paymentXProduct.id,
+    };
+  }
+  
+  // Create a new price in PaymentX
+  async createPrice(price: Price): Promise<Price> {
+    if (!this.client) {
+      throw new Error('Provider not initialized');
+    }
+    
+    if (!price.productId) {
+      throw new Error('Product ID is required for price creation');
+    }
+    
+    // Create price in PaymentX
+    const paymentXPrice = await this.client.prices.create({
+      product_id: price.productId,
+      nickname: price.nickname || price.name,
+      amount: price.unitAmount,
+      currency: price.currency,
+      recurring: price.recurring ? {
+        interval: price.recurring.interval,
+        interval_count: price.recurring.intervalCount,
+      } : undefined,
+      // Other fields as needed by PaymentX
+      metadata: price.metadata || {},
+    });
+    
+    // Return the created price with the assigned ID
+    return {
+      ...price,
+      id: paymentXPrice.id,
+    };
+  }
+  
+  // Update an existing price in PaymentX
+  async updatePrice(price: Price): Promise<Price> {
+    if (!this.client) {
+      throw new Error('Provider not initialized');
+    }
+    
+    if (!price.id) {
+      throw new Error('Price ID is required for updates');
+    }
+    
+    // Update price in PaymentX
+    const paymentXPrice = await this.client.prices.update(price.id, {
+      nickname: price.nickname || price.name,
+      // Note: Some providers might not allow updating amount after creation
+      // Other fields as needed by PaymentX
+      metadata: price.metadata || {},
+    });
+    
+    // Return the updated price
+    return {
+      ...price,
+      id: paymentXPrice.id,
+    };
+  }
+}</code></pre>
+            </div>
+
+            <h2>Using Your Custom Provider</h2>
+
+            <p>After creating your custom provider, you can use it with Prices as Code:</p>
+
+            <div class="highlight">
+                <pre><code class="language-typescript">import { pac } from 'prices-as-code';
+import { PaymentXProvider } from './providers/paymentx.js';
+
+async function syncPricing() {
+  // Create an instance of your custom provider
+  const paymentXProvider = new PaymentXProvider();
+  
+  try {
+    const result = await pac({
+      configPath: './pricing.ts',
+      providers: [
+        {
+          provider: paymentXProvider,
+          options: {
+            apiKey: process.env.PAYMENTX_API_KEY,
+            // Any other options your provider needs
+          }
+        }
+      ]
+    });
+    
+    console.log('Sync completed!');
+    console.log(`Updated products: ${result.config.products.length}`);
+    console.log(`Updated prices: ${result.config.prices.length}`);
+  } catch (error) {
+    console.error('Sync failed:', error);
+  }
+}
+
+syncPricing();</code></pre>
+            </div>
+
+            <h2>Provider Registration</h2>
+
+            <p>You can also register your custom provider globally:</p>
+
+            <div class="highlight">
+                <pre><code class="language-typescript">import { registerProvider, pac } from 'prices-as-code';
+import { PaymentXProvider } from './providers/paymentx.js';
+
+// Register your custom provider
+registerProvider('paymentx', PaymentXProvider);
+
+// Now you can use it by name
+async function syncPricing() {
+  try {
+    const result = await pac({
+      configPath: './pricing.ts',
+      providers: [
+        {
+          provider: 'paymentx', // Use by name
+          options: {
+            apiKey: process.env.PAYMENTX_API_KEY,
+          }
+        }
+      ]
+    });
+    
+    console.log('Sync completed!');
+  } catch (error) {
+    console.error('Sync failed:', error);
+  }
+}
+
+syncPricing();</code></pre>
+            </div>
+
+            <h2>Handling Provider-Specific Features</h2>
+
+            <p>Different payment providers might have unique features or data structures. Your custom provider can handle these by implementing additional methods or transformations:</p>
+
+            <div class="highlight">
+                <pre><code class="language-typescript">export class PaymentXProvider implements Provider {
+  // ... other methods ...
+  
+  // Example of a provider-specific method
+  async createSubscriptionPlan(plan: any): Promise<any> {
+    if (!this.client) {
+      throw new Error('Provider not initialized');
+    }
+    
+    // Create a subscription plan in PaymentX
+    return this.client.subscriptionPlans.create(plan);
+  }
+  
+  // Transform provider-specific data
+  transformProductData(product: Product): any {
+    // Convert Prices as Code product format to PaymentX format
+    return {
+      name: product.name,
+      description: product.description || '',
+      is_active: true,
+      // PaymentX-specific fields
+      category: product.metadata?.category || 'default',
+      billing_scheme: product.metadata?.billingScheme || 'standard',
+      // Other transformations
+    };
+  }
+  
+  // Handle feature flags or capabilities
+  supportsFeature(featureName: string): boolean {
+    const supportedFeatures = [
+      'tiered_pricing',
+      'metered_billing',
+      'tax_rates',
+    ];
+    
+    return supportedFeatures.includes(featureName);
+  }
+}</code></pre>
+            </div>
+
+            <h2>Error Handling and Logging</h2>
+
+            <p>Implement robust error handling in your custom provider:</p>
+
+            <div class="highlight">
+                <pre><code class="language-typescript">export class PaymentXProvider implements Provider {
+  // ... other fields ...
+  private logger: any;
+  
+  constructor(logger?: any) {
+    this.logger = logger || console;
+  }
+  
+  async createProduct(product: Product): Promise<Product> {
+    if (!this.client) {
+      throw new Error('Provider not initialized');
+    }
+    
+    try {
+      this.logger.debug(`Creating product: ${product.name}`);
+      
+      const paymentXProduct = await this.client.products.create({
+        name: product.name,
+        description: product.description || '',
+        metadata: product.metadata || {},
+      });
+      
+      this.logger.info(`Product created: ${paymentXProduct.id}`);
+      
+      return {
+        ...product,
+        id: paymentXProduct.id,
+      };
+    } catch (error) {
+      this.logger.error(`Failed to create product: ${product.name}`, error);
+      
+      // Enhance error with context
+      const enhancedError = new Error(
+        `Failed to create product in PaymentX: ${error.message}`
+      );
+      enhancedError.cause = error;
+      enhancedError.context = { product };
+      
+      throw enhancedError;
+    }
+  }
+  
+  // ... other methods with similar error handling ...
+}</code></pre>
+            </div>
+
+            <h2>Testing Custom Providers</h2>
+
+            <p>It's important to thoroughly test your custom provider:</p>
+
+            <div class="highlight">
+                <pre><code class="language-typescript">import { PaymentXProvider } from './paymentx.js';
+
+// Create a mock PaymentX client for testing
+const mockClient = {
+  test: jest.fn().mockResolvedValue(true),
+  products: {
+    list: jest.fn().mockResolvedValue([
+      { id: 'prod_1', name: 'Test Product', description: 'A test product' }
+    ]),
+    create: jest.fn().mockImplementation((data) => 
+      Promise.resolve({ id: 'prod_new', ...data })
+    ),
+    update: jest.fn().mockImplementation((id, data) => 
+      Promise.resolve({ id, ...data })
+    ),
+  },
+  prices: {
+    list: jest.fn().mockResolvedValue([
+      { 
+        id: 'price_1', 
+        product_id: 'prod_1',
+        nickname: 'Test Price',
+        amount: 1000,
+        currency: 'usd',
+        recurring: { interval: 'month', interval_count: 1 }
+      }
+    ]),
+    create: jest.fn().mockImplementation((data) => 
+      Promise.resolve({ id: 'price_new', ...data })
+    ),
+    update: jest.fn().mockImplementation((id, data) => 
+      Promise.resolve({ id, ...data })
+    ),
+  },
+};
+
+// Mock the PaymentX SDK
+jest.mock('paymentx-sdk', () => ({
+  PaymentXClient: jest.fn().mockImplementation(() => mockClient)
+}));
+
+describe('PaymentXProvider', () => {
+  let provider;
+  
+  beforeEach(() => {
+    provider = new PaymentXProvider();
+    return provider.initialize({ apiKey: 'test_key' });
+  });
+  
+  test('fetchProducts returns mapped products', async () => {
+    const products = await provider.fetchProducts();
+    
+    expect(products).toHaveLength(1);
+    expect(products[0]).toEqual({
+      provider: 'paymentx',
+      id: 'prod_1',
+      name: 'Test Product',
+      description: 'A test product',
+      metadata: {},
+    });
+    expect(mockClient.products.list).toHaveBeenCalled();
+  });
+  
+  test('createProduct maps and creates a product', async () => {
+    const product = {
+      provider: 'paymentx',
+      name: 'New Product',
+      description: 'A new product',
+    };
+    
+    const result = await provider.createProduct(product);
+    
+    expect(result).toEqual({
+      ...product,
+      id: 'prod_new',
+    });
+    expect(mockClient.products.create).toHaveBeenCalledWith({
+      name: 'New Product',
+      description: 'A new product',
+      metadata: {},
+    });
+  });
+  
+  // Additional tests for other methods
+});</code></pre>
+            </div>
+
+            <h2>Next Steps</h2>
+
+            <ul>
+                <li>Explore <a href="metadata.html">Working with Metadata</a> for enhanced flexibility</li>
+                <li>Learn about <a href="ci-cd.html">CI/CD Integration</a> for automated pricing updates</li>
+                <li>Check out the <a href="../api/index.html">API Documentation</a> for more advanced features</li>
+            </ul>
+        </div>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container">
+            <div class="footer-content">
+                <p>Copyright &copy; 2025 Nate Ross. Distributed by an <a href="https://github.com/wickdninja/prices-as-code/blob/main/LICENSE">MIT license.</a></p>
+                <p><a href="#top" class="back-to-top">Back to top</a></p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../assets/js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Metadata - Prices as Code</title>
+    <meta name="description" content="Learn how to work with metadata in Prices as Code for enhanced flexibility">
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="icon" href="https://raw.githubusercontent.com/wickdninja/assets/refs/heads/main/PaC.webp">
+</head>
+<body>
+    <header class="site-header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <a href="../index.html">
+                        <img src="https://raw.githubusercontent.com/wickdninja/assets/refs/heads/main/PaC.webp" alt="Prices as Code" width="40">
+                        <span>Prices as Code</span>
+                    </a>
+                </div>
+                <nav class="main-nav">
+                    <ul>
+                        <li><a href="index.html">Guides</a></li>
+                        <li><a href="../api/index.html">API</a></li>
+                        <li><a href="../providers/index.html">Providers</a></li>
+                        <li><a href="https://github.com/wickdninja/prices-as-code" target="_blank">GitHub</a></li>
+                        <li><a href="https://www.npmjs.com/package/prices-as-code" target="_blank">NPM</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main class="content">
+        <div class="container">
+            <h1>Working with Metadata</h1>
+
+            <p>Metadata is a powerful feature in Prices as Code that allows you to attach custom information to your products and prices. This guide explains how to effectively use metadata to extend the functionality of your pricing configuration.</p>
+
+            <h2>What is Metadata?</h2>
+
+            <p>Metadata is additional information that doesn't affect the core functionality of products or prices but provides context, categorization, or custom attributes. Both products and prices in Prices as Code support a <code>metadata</code> field where you can store any JSON-serializable data.</p>
+
+            <h2>Use Cases for Metadata</h2>
+
+            <p>Metadata can be used for various purposes:</p>
+            <ul>
+                <li>UI display preferences (order, highlighting, badges)</li>
+                <li>Feature flags and limitations</li>
+                <li>Integration with other systems</li>
+                <li>Categorization and filtering</li>
+                <li>Internal tracking and reporting</li>
+                <li>Localization information</li>
+                <li>Custom business logic</li>
+            </ul>
+
+            <h2>Adding Metadata to Products</h2>
+
+            <p>Here's how to add metadata to your product definitions:</p>
+
+            <div class="highlight">
+                <pre><code class="language-typescript">// TypeScript example
+{
+  provider: "stripe",
+  name: "Pro Plan",
+  description: "For growing businesses",
+  features: [
+    "Unlimited projects",
+    "100GB storage",
+    "Priority support"
+  ],
+  highlight: true,
+  metadata: {
+    displayOrder: 2,
+    category: "business",
+    planCode: "PRO",
+    featureLimits: {
+      maxUsers: 10,
+      maxStorage: 100,
+      maxProjects: -1 // unlimited
+    },
+    upsellTarget: "enterprise_plan",
+    availableRegions: ["US", "EU", "APAC"]
+  }
+}</code></pre>
+            </div>
+
+            <div class="highlight">
+                <pre><code class="language-yaml"># YAML example
+- provider: stripe
+  name: Pro Plan
+  description: For growing businesses
+  features:
+    - Unlimited projects
+    - 100GB storage
+    - Priority support
+  highlight: true
+  metadata:
+    displayOrder: 2
+    category: business
+    planCode: PRO
+    featureLimits:
+      maxUsers: 10
+      maxStorage: 100
+      maxProjects: -1  # unlimited
+    upsellTarget: enterprise_plan
+    availableRegions:
+      - US
+      - EU
+      - APAC</code></pre>
+            </div>
+
+            <h2>Adding Metadata to Prices</h2>
+
+            <p>Similarly, you can add metadata to your price definitions:</p>
+
+            <div class="highlight">
+                <pre><code class="language-typescript">// TypeScript example
+{
+  provider: "stripe",
+  name: "Pro Annual",
+  nickname: "Pro Annual",
+  unitAmount: 19990,
+  currency: "usd",
+  type: "recurring",
+  recurring: {
+    interval: "year",
+    intervalCount: 1,
+  },
+  productKey: "pro_plan",
+  metadata: {
+    displayName: "Pro Plan - Annual",
+    popular: true,
+    savings: "17%",
+    planCode: "PRO_ANNUAL",
+    billingCycle: "annual",
+    trialDays: 14,
+    upsellMessage: "Upgrade to Enterprise for more storage and users!",
+    promotionEligible: true,
+    tags: ["recommended", "best-value"]
+  }
+}</code></pre>
+            </div>
+
+            <div class="highlight">
+                <pre><code class="language-yaml"># YAML example
+- provider: stripe
+  name: Pro Annual
+  nickname: Pro Annual
+  unitAmount: 19990
+  currency: usd
+  type: recurring
+  recurring:
+    interval: year
+    intervalCount: 1
+  productKey: pro_plan
+  metadata:
+    displayName: Pro Plan - Annual
+    popular: true
+    savings: 17%
+    planCode: PRO_ANNUAL
+    billingCycle: annual
+    trialDays: 14
+    upsellMessage: Upgrade to Enterprise for more storage and users!
+    promotionEligible: true
+    tags:
+      - recommended
+      - best-value</code></pre>
+            </div>
+
+            <h2>Metadata Best Practices</h2>
+
+            <p>Follow these best practices when working with metadata:</p>
+            <ul>
+                <li><strong>Keep it structured</strong>: Organize your metadata with a consistent schema</li>
+                <li><strong>Use meaningful keys</strong>: Choose descriptive names for metadata properties</li>
+                <li><strong>Document your metadata</strong>: Maintain documentation of what each metadata field represents</li>
+                <li><strong>Validate metadata</strong>: Consider adding validation for your metadata structure</li>
+                <li><strong>Be mindful of size</strong>: Keep metadata reasonably sized (most providers have limits)</li>
+                <li><strong>Don't store sensitive data</strong>: Never store passwords, API keys, or personal data in metadata</li>
+            </ul>
+
+            <h2>Working with Metadata in Code</h2>
+
+            <p>Access and use metadata in your application code:</p>
+
+            <div class="highlight">
+                <pre><code class="language-typescript">import { pac } from 'prices-as-code';
+import config from './pricing.js';
+
+// Example: Filter prices based on metadata
+function getPricesForRegion(region) {
+  return config.prices.filter(price => {
+    // Check if price's product is available in the region
+    const product = config.products.find(p => p.key === price.productKey);
+    return product?.metadata?.availableRegions?.includes(region);
+  });
+}
+
+// Example: Get recommended plan
+function getRecommendedPlan() {
+  return config.prices.find(price => 
+    price.metadata?.tags?.includes('recommended')
+  );
+}
+
+// Example: Get feature limits for a product
+function getFeatureLimits(productKey) {
+  const product = config.products.find(p => p.key === productKey);
+  return product?.metadata?.featureLimits || {};
+}
+
+// Example: Check if user has exceeded limits
+function hasExceededLimits(user, productKey) {
+  const limits = getFeatureLimits(productKey);
+  
+  // Check against user's usage
+  if (limits.maxUsers !== -1 && user.teamSize > limits.maxUsers) {
+    return true;
+  }
+  
+  if (limits.maxStorage !== -1 && user.storageUsed > limits.maxStorage) {
+    return true;
+  }
+  
+  return false;
+}
+
+// Example: Get upsell target for a product
+function getUpsellTarget(productKey) {
+  const product = config.products.find(p => p.key === productKey);
+  const upsellKey = product?.metadata?.upsellTarget;
+  
+  if (upsellKey) {
+    return config.products.find(p => p.key === upsellKey);
+  }
+  
+  return null;
+}</code></pre>
+            </div>
+
+            <h2>Using Metadata for UI Customization</h2>
+
+            <p>Metadata is particularly useful for customizing UI elements:</p>
+
+            <div class="highlight">
+                <pre><code class="language-typescript">// TypeScript example with React
+import React from 'react';
+import config from './pricing.js';
+
+function PricingTable() {
+  // Sort products by display order
+  const sortedProducts = [...config.products].sort((a, b) => 
+    (a.metadata?.displayOrder || 99) - (b.metadata?.displayOrder || 99)
+  );
+  
+  return (
+    <div className="pricing-table">
+      {sortedProducts.map(product => {
+        // Get prices for this product
+        const prices = config.prices.filter(p => p.productKey === product.key);
+        
+        // Find the "popular" price if any
+        const popularPrice = prices.find(p => p.metadata?.popular);
+        const displayPrice = popularPrice || prices[0];
+        
+        return (
+          <div 
+            className={`pricing-card ${product.highlight ? 'highlighted' : ''}`}
+            key={product.key}
+          >
+            {product.metadata?.category && (
+              <div className="category-badge">{product.metadata.category}</div>
+            )}
+            
+            <h3 className="product-name">{product.name}</h3>
+            <p className="product-description">{product.description}</p>
+            
+            <div className="price-display">
+              <span className="currency">{displayPrice.currency.toUpperCase()}</span>
+              <span className="amount">
+                {(displayPrice.unitAmount / 100).toFixed(2)}
+              </span>
+              <span className="interval">
+                {displayPrice.recurring ? `/${displayPrice.recurring.interval}` : ''}
+              </span>
+            </div>
+            
+            {displayPrice.metadata?.savings && (
+              <div className="savings-badge">
+                Save {displayPrice.metadata.savings}
+              </div>
+            )}
+            
+            <ul className="features-list">
+              {product.features.map((feature, i) => (
+                <li key={i}>{feature}</li>
+              ))}
+            </ul>
+            
+            {displayPrice.metadata?.trialDays && (
+              <p className="trial-message">
+                {displayPrice.metadata.trialDays}-day free trial
+              </p>
+            )}
+            
+            <button className="subscribe-button">
+              Subscribe to {displayPrice.metadata?.displayName || displayPrice.nickname}
+            </button>
+            
+            {displayPrice.metadata?.upsellMessage && (
+              <p className="upsell-message">{displayPrice.metadata.upsellMessage}</p>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}</code></pre>
+            </div>
+
+            <h2>Provider-Specific Metadata</h2>
+
+            <p>Different payment providers might have specific metadata requirements or limitations:</p>
+
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Provider</th>
+                            <th>Metadata Limits</th>
+                            <th>Special Considerations</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Stripe</td>
+                            <td>Up to 50 keys, keys up to 40 characters, values up to 500 characters</td>
+                            <td>Only strings are allowed for values</td>
+                        </tr>
+                        <tr>
+                            <td>Recurly</td>
+                            <td>Up to 255 characters for both keys and values</td>
+                            <td>Limited to string key-value pairs</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <p>When working with providers that have strict metadata limitations, Prices as Code automatically handles the serialization and deserialization of complex metadata objects:</p>
+
+            <div class="highlight">
+                <pre><code class="language-typescript">// In your configuration
+metadata: {
+  featureLimits: {
+    maxUsers: 10,
+    maxStorage: 100
+  },
+  availableRegions: ["US", "EU"]
+}
+
+// What gets stored in Stripe
+metadata: {
+  "featureLimits": "{\"maxUsers\":10,\"maxStorage\":100}",
+  "availableRegions": "[\"US\",\"EU\"]"
+}</code></pre>
+            </div>
+
+            <h2>Metadata for Feature Flags</h2>
+
+            <p>Metadata is ideal for implementing feature flags in your pricing:</p>
+
+            <div class="highlight">
+                <pre><code class="language-typescript">// Configuration
+const config = {
+  products: [
+    {
+      provider: "stripe",
+      name: "Basic Plan",
+      // ...
+      metadata: {
+        features: {
+          reporting: true,
+          export: false,
+          api_access: false,
+          white_label: false
+        }
+      }
+    },
+    {
+      provider: "stripe",
+      name: "Pro Plan",
+      // ...
+      metadata: {
+        features: {
+          reporting: true,
+          export: true,
+          api_access: true,
+          white_label: false
+        }
+      }
+    }
+  ],
+  // ...
+};
+
+// Usage in application
+function hasFeatureAccess(user, featureName) {
+  const subscription = getUserSubscription(user);
+  if (!subscription) return false;
+  
+  const productKey = subscription.productKey;
+  const product = config.products.find(p => p.key === productKey);
+  
+  return !!product?.metadata?.features?.[featureName];
+}
+
+// Example usage
+if (hasFeatureAccess(currentUser, 'api_access')) {
+  // Show API documentation and keys
+} else {
+  // Show upgrade prompt
+}</code></pre>
+            </div>
+
+            <h2>Next Steps</h2>
+
+            <ul>
+                <li>Learn about <a href="custom-providers.html">Custom Providers</a> to extend the library</li>
+                <li>Explore <a href="custom-pricing.html">Custom Pricing Logic</a> for complex scenarios</li>
+                <li>Check out the <a href="../api/index.html">API Documentation</a> for more advanced features</li>
+            </ul>
+        </div>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container">
+            <div class="footer-content">
+                <p>Copyright &copy; 2025 Nate Ross. Distributed by an <a href="https://github.com/wickdninja/prices-as-code/blob/main/LICENSE">MIT license.</a></p>
+                <p><a href="#top" class="back-to-top">Back to top</a></p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../assets/js/main.js"></script>
+</body>
+</html>

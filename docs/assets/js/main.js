@@ -131,7 +131,17 @@ function setupDarkMode() {
   if (header) {
     const themeToggle = document.createElement('button');
     themeToggle.className = 'theme-toggle';
-    themeToggle.innerHTML = '<span class="dark-icon">🌙</span><span class="light-icon">☀️</span>';
+    
+    // Create a function to update the icon based on current theme
+    const updateThemeIcon = () => {
+      const currentTheme = document.documentElement.getAttribute('data-theme');
+      themeToggle.innerHTML = currentTheme === 'dark' 
+        ? '☀️' // Show sun in dark mode
+        : '🌙'; // Show moon in light mode
+    };
+    
+    // Set initial icon
+    updateThemeIcon();
     themeToggle.title = 'Toggle dark mode';
     
     // Add click event
@@ -146,6 +156,9 @@ function setupDarkMode() {
       setTimeout(() => {
         document.documentElement.setAttribute('data-theme', newTheme);
         localStorage.setItem('theme', newTheme);
+        
+        // Update the icon to match the new theme
+        updateThemeIcon();
         
         setTimeout(() => {
           document.body.style.opacity = '1';

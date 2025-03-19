@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CLI Usage - Prices as Code</title>
+    <meta name="description" content="Learn how to use the Prices as Code command-line interface">
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="icon" href="https://raw.githubusercontent.com/wickdninja/assets/refs/heads/main/PaC.webp">
+</head>
+<body>
+    <header class="site-header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <a href="../index.html">
+                        <img src="https://raw.githubusercontent.com/wickdninja/assets/refs/heads/main/PaC.webp" alt="Prices as Code" width="40">
+                        <span>Prices as Code</span>
+                    </a>
+                </div>
+                <nav class="main-nav">
+                    <ul>
+                        <li><a href="index.html">Guides</a></li>
+                        <li><a href="../api/index.html">API</a></li>
+                        <li><a href="../providers/index.html">Providers</a></li>
+                        <li><a href="https://github.com/wickdninja/prices-as-code" target="_blank">GitHub</a></li>
+                        <li><a href="https://www.npmjs.com/package/prices-as-code" target="_blank">NPM</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main class="content">
+        <div class="container">
+            <h1>Command-Line Interface</h1>
+
+            <p>Prices as Code provides a powerful command-line interface (CLI) that makes it easy to synchronize your pricing configuration with supported payment providers. This guide covers all the CLI features and options.</p>
+
+            <h2>Basic Usage</h2>
+
+            <p>The simplest way to use the CLI is to provide the path to your configuration file:</p>
+
+            <div class="highlight">
+                <pre><code class="language-bash">npx prices-as-code path/to/config.ts</code></pre>
+            </div>
+
+            <p>Or for YAML files:</p>
+
+            <div class="highlight">
+                <pre><code class="language-bash">npx prices-as-code path/to/config.yml</code></pre>
+            </div>
+
+            <p>This will:</p>
+            <ol>
+                <li>Load your configuration file</li>
+                <li>Validate the configuration</li>
+                <li>Connect to the payment provider(s) using environment variables</li>
+                <li>Synchronize products and prices</li>
+                <li>Report the results</li>
+            </ol>
+
+            <h2>Installing the CLI</h2>
+
+            <p>If you use the CLI frequently, you might want to install it globally:</p>
+
+            <div class="highlight">
+                <pre><code class="language-bash">npm install -g prices-as-code</code></pre>
+            </div>
+
+            <p>Then you can use it without npx:</p>
+
+            <div class="highlight">
+                <pre><code class="language-bash">prices-as-code path/to/config.ts</code></pre>
+            </div>
+
+            <h2>CLI Options</h2>
+
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Option</th>
+                            <th>Description</th>
+                            <th>Example</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>--dry-run</code></td>
+                            <td>Simulate synchronization without making actual changes</td>
+                            <td><code>npx prices-as-code config.ts --dry-run</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>--env-file</code></td>
+                            <td>Specify custom .env file location</td>
+                            <td><code>npx prices-as-code config.ts --env-file ./configs/.env.production</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>--verbose</code></td>
+                            <td>Show detailed logs of the synchronization process</td>
+                            <td><code>npx prices-as-code config.ts --verbose</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>--provider</code></td>
+                            <td>Specify a provider (useful when config has multiple providers)</td>
+                            <td><code>npx prices-as-code config.ts --provider stripe</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>--help</code></td>
+                            <td>Show help information</td>
+                            <td><code>npx prices-as-code --help</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>--version</code></td>
+                            <td>Show version information</td>
+                            <td><code>npx prices-as-code --version</code></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h2>Environment Variables</h2>
+
+            <p>The CLI looks for provider API keys in environment variables. You can set these in a <code>.env</code> file in your project root or provide them directly in your environment.</p>
+
+            <h3>Supported Environment Variables</h3>
+
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Provider</th>
+                            <th>Environment Variable</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Stripe</td>
+                            <td><code>STRIPE_SECRET_KEY</code></td>
+                        </tr>
+                        <tr>
+                            <td>Recurly</td>
+                            <td><code>RECURLY_API_KEY</code></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>Example .env File</h3>
+
+            <div class="highlight">
+                <pre><code># .env file
+STRIPE_SECRET_KEY=sk_test_your_stripe_key
+RECURLY_API_KEY=your_recurly_key</code></pre>
+            </div>
+
+            <h2>Using the Dry Run Mode</h2>
+
+            <p>The <code>--dry-run</code> flag is particularly useful for testing your configuration before applying changes to your production environment:</p>
+
+            <div class="highlight">
+                <pre><code class="language-bash">npx prices-as-code config.ts --dry-run</code></pre>
+            </div>
+
+            <p>In dry run mode, the CLI will:</p>
+            <ul>
+                <li>Validate your configuration</li>
+                <li>Connect to your provider(s)</li>
+                <li>Report what changes would be made (creates, updates, deletes)</li>
+                <li>Not make any actual changes to your provider accounts</li>
+            </ul>
+
+            <p>This is perfect for:</p>
+            <ul>
+                <li>Verifying your configuration is correct</li>
+                <li>Checking what would change before committing</li>
+                <li>Testing CI/CD pipelines</li>
+            </ul>
+
+            <h2>Verbose Mode</h2>
+
+            <p>Use the <code>--verbose</code> flag to get detailed information about the synchronization process:</p>
+
+            <div class="highlight">
+                <pre><code class="language-bash">npx prices-as-code config.ts --verbose</code></pre>
+            </div>
+
+            <p>This will show:</p>
+            <ul>
+                <li>Configuration validation details</li>
+                <li>API calls to the provider</li>
+                <li>Detailed information about each product and price being synchronized</li>
+                <li>Any warnings or errors in detail</li>
+            </ul>
+
+            <h2>Handling Multiple Providers</h2>
+
+            <p>If your configuration file includes products and prices for multiple providers, you can specify which provider to synchronize with:</p>
+
+            <div class="highlight">
+                <pre><code class="language-bash">npx prices-as-code config.ts --provider stripe</code></pre>
+            </div>
+
+            <p>This is useful when:</p>
+            <ul>
+                <li>You want to update each provider separately</li>
+                <li>You're testing integration with a new provider</li>
+                <li>One provider is temporarily unavailable</li>
+            </ul>
+
+            <h2>Next Steps</h2>
+
+            <ul>
+                <li>Learn about <a href="ci-cd.html">CI/CD Integration</a> to automate your pricing updates</li>
+                <li>Explore <a href="custom-pricing.html">Custom Pricing Logic</a> for complex scenarios</li>
+                <li>Check out <a href="metadata.html">Working with Metadata</a> for enhanced flexibility</li>
+            </ul>
+        </div>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container">
+            <div class="footer-content">
+                <p>Copyright &copy; 2025 Nate Ross. Distributed by an <a href="https://github.com/wickdninja/prices-as-code/blob/main/LICENSE">MIT license.</a></p>
+                <p><a href="#top" class="back-to-top">Back to top</a></p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../assets/js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CI/CD Integration - Prices as Code</title>
+    <meta name="description" content="Set up continuous integration for pricing updates with Prices as Code">
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="icon" href="https://raw.githubusercontent.com/wickdninja/assets/refs/heads/main/PaC.webp">
+</head>
+<body>
+    <header class="site-header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <a href="../index.html">
+                        <img src="https://raw.githubusercontent.com/wickdninja/assets/refs/heads/main/PaC.webp" alt="Prices as Code" width="40">
+                        <span>Prices as Code</span>
+                    </a>
+                </div>
+                <nav class="main-nav">
+                    <ul>
+                        <li><a href="index.html">Guides</a></li>
+                        <li><a href="../api/index.html">API</a></li>
+                        <li><a href="../providers/index.html">Providers</a></li>
+                        <li><a href="https://github.com/wickdninja/prices-as-code" target="_blank">GitHub</a></li>
+                        <li><a href="https://www.npmjs.com/package/prices-as-code" target="_blank">NPM</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main class="content">
+        <div class="container">
+            <h1>CI/CD Integration</h1>
+
+            <p>Integrating Prices as Code with your CI/CD pipeline allows you to automatically synchronize your pricing configuration with your payment providers whenever changes are made. This guide covers how to set up continuous integration for your pricing updates.</p>
+
+            <h2>Benefits of CI/CD for Pricing</h2>
+
+            <p>Implementing CI/CD for your pricing configuration provides several advantages:</p>
+            <ul>
+                <li>Ensures pricing changes are applied consistently</li>
+                <li>Provides an audit trail of pricing changes through your version control system</li>
+                <li>Enables review processes (e.g., pull requests) for pricing changes</li>
+                <li>Prevents manual errors in pricing configurations</li>
+                <li>Ensures staging environments have the correct pricing before production changes</li>
+            </ul>
+
+            <h2>General Workflow</h2>
+
+            <p>A typical CI/CD workflow for Prices as Code might look like this:</p>
+            <ol>
+                <li>Developer updates the pricing configuration file</li>
+                <li>Changes are committed to version control and a pull request is created</li>
+                <li>CI runs a validation check on the configuration</li>
+                <li>After approval, the changes are merged to the main branch</li>
+                <li>CI/CD pipeline runs the synchronization against your staging environment</li>
+                <li>After testing, the changes are promoted to production</li>
+            </ol>
+
+            <h2>GitHub Actions Example</h2>
+
+            <p>Here's an example GitHub Actions workflow file that synchronizes your pricing configuration on push to the main branch:</p>
+
+            <div class="highlight">
+                <pre><code class="language-yaml"># .github/workflows/sync-prices.yml
+name: Sync Pricing Configuration
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'pricing.ts'
+      - 'pricing.yml'
+  workflow_dispatch:  # Allow manual triggering
+
+jobs:
+  sync-prices:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Validate configuration
+        run: npx prices-as-code pricing.ts --dry-run
+        env:
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+          
+      - name: Sync pricing (production)
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        run: npx prices-as-code pricing.ts
+        env:
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}</code></pre>
+            </div>
+
+            <h2>GitLab CI Example</h2>
+
+            <p>Here's an example GitLab CI/CD configuration:</p>
+
+            <div class="highlight">
+                <pre><code class="language-yaml"># .gitlab-ci.yml
+stages:
+  - validate
+  - deploy-staging
+  - deploy-production
+
+validate-pricing:
+  stage: validate
+  image: node:18
+  script:
+    - npm ci
+    - npx prices-as-code pricing.ts --dry-run
+  only:
+    changes:
+      - pricing.ts
+      - pricing.yml
+  environment:
+    name: validation
+  variables:
+    STRIPE_SECRET_KEY: $STRIPE_TEST_KEY
+
+sync-pricing-staging:
+  stage: deploy-staging
+  image: node:18
+  script:
+    - npm ci
+    - npx prices-as-code pricing.ts
+  only:
+    refs:
+      - main
+    changes:
+      - pricing.ts
+      - pricing.yml
+  environment:
+    name: staging
+  variables:
+    STRIPE_SECRET_KEY: $STRIPE_TEST_KEY
+
+sync-pricing-production:
+  stage: deploy-production
+  image: node:18
+  script:
+    - npm ci
+    - npx prices-as-code pricing.ts
+  only:
+    refs:
+      - main
+    changes:
+      - pricing.ts
+      - pricing.yml
+  environment:
+    name: production
+  variables:
+    STRIPE_SECRET_KEY: $STRIPE_PROD_KEY
+  when: manual # Requires manual approval</code></pre>
+            </div>
+
+            <h2>Environment-Specific Configurations</h2>
+
+            <p>For different environments (development, staging, production), you might want to use different configuration files or environment variables.</p>
+
+            <h3>Using Environment Files</h3>
+
+            <p>You can create environment-specific .env files:</p>
+
+            <div class="highlight">
+                <pre><code class="language-bash"># In CI/CD pipeline
+npx prices-as-code pricing.ts --env-file .env.production</code></pre>
+            </div>
+
+            <h3>Using Different Configuration Files</h3>
+
+            <p>Or use environment-specific configuration files:</p>
+            
+            <div class="highlight">
+                <pre><code class="language-bash"># For staging
+npx prices-as-code pricing.staging.ts
+
+# For production
+npx prices-as-code pricing.production.ts</code></pre>
+            </div>
+
+            <h2>Managing Secrets</h2>
+
+            <p>Never commit API keys or secrets to your repository. Instead:</p>
+            <ul>
+                <li>Use your CI/CD platform's secrets management</li>
+                <li>Set environment variables in your CI/CD pipeline</li>
+                <li>Use secret management services like AWS Secrets Manager, HashiCorp Vault, etc.</li>
+            </ul>
+
+            <h3>Setting up Secrets in GitHub Actions</h3>
+
+            <ol>
+                <li>Go to your GitHub repository</li>
+                <li>Click on "Settings"</li>
+                <li>Select "Secrets and variables" then "Actions"</li>
+                <li>Click "New repository secret"</li>
+                <li>Add your API keys (STRIPE_SECRET_KEY, etc.)</li>
+            </ol>
+
+            <h3>Setting up Secrets in GitLab CI</h3>
+
+            <ol>
+                <li>Go to your GitLab project</li>
+                <li>Navigate to "Settings" > "CI/CD"</li>
+                <li>Expand the "Variables" section</li>
+                <li>Click "Add Variable"</li>
+                <li>Add your API keys (STRIPE_SECRET_KEY, etc.) and mark them as "Protected" and "Masked"</li>
+            </ol>
+
+            <h2>Validation and Testing</h2>
+
+            <p>Always implement validation steps before synchronization:</p>
+
+            <div class="highlight">
+                <pre><code class="language-bash"># Validate configuration without making changes
+npx prices-as-code pricing.ts --dry-run</code></pre>
+            </div>
+
+            <p>This ensures your configuration is valid before attempting to synchronize with payment providers.</p>
+
+            <h2>Handling Failures</h2>
+
+            <p>To make your CI/CD pipeline robust, consider:</p>
+            <ul>
+                <li>Adding retry logic for temporary provider API failures</li>
+                <li>Implementing notifications for failed synchronizations</li>
+                <li>Setting up monitoring for pricing changes</li>
+                <li>Adding rollback capabilities for pricing changes</li>
+            </ul>
+
+            <h2>Pull Request Validation</h2>
+
+            <p>It's a good practice to validate pricing changes in pull requests before they're merged:</p>
+
+            <div class="highlight">
+                <pre><code class="language-yaml"># GitHub Actions example for PR validation
+name: Validate Pricing Configuration
+
+on:
+  pull_request:
+    paths:
+      - 'pricing.ts'
+      - 'pricing.yml'
+
+jobs:
+  validate-pricing:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Validate configuration
+        run: npx prices-as-code pricing.ts --dry-run
+        env:
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_TEST_KEY }}</code></pre>
+            </div>
+
+            <h2>Next Steps</h2>
+
+            <ul>
+                <li>Learn about <a href="custom-pricing.html">Custom Pricing Logic</a> for complex scenarios</li>
+                <li>Explore <a href="custom-providers.html">Custom Providers</a> to extend the library</li>
+                <li>Check out <a href="metadata.html">Working with Metadata</a> for enhanced flexibility</li>
+            </ul>
+        </div>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container">
+            <div class="footer-content">
+                <p>Copyright &copy; 2025 Nate Ross. Distributed by an <a href="https://github.com/wickdninja/prices-as-code/blob/main/LICENSE">MIT license.</a></p>
+                <p><a href="#top" class="back-to-top">Back to top</a></p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../assets/js/main.js"></script>
+</body>
+</html>

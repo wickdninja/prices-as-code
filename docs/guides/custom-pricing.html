@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Custom Pricing - Prices as Code</title>
+    <meta name="description" content="Implement custom pricing logic with Prices as Code">
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="icon" href="https://raw.githubusercontent.com/wickdninja/assets/refs/heads/main/PaC.webp">
+</head>
+<body>
+    <header class="site-header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <a href="../index.html">
+                        <img src="https://raw.githubusercontent.com/wickdninja/assets/refs/heads/main/PaC.webp" alt="Prices as Code" width="40">
+                        <span>Prices as Code</span>
+                    </a>
+                </div>
+                <nav class="main-nav">
+                    <ul>
+                        <li><a href="index.html">Guides</a></li>
+                        <li><a href="../api/index.html">API</a></li>
+                        <li><a href="../providers/index.html">Providers</a></li>
+                        <li><a href="https://github.com/wickdninja/prices-as-code" target="_blank">GitHub</a></li>
+                        <li><a href="https://www.npmjs.com/package/prices-as-code" target="_blank">NPM</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main class="content">
+        <div class="container">
+            <h1>Custom Pricing Logic</h1>
+
+            <p>While the standard configuration format covers many common pricing scenarios, you might need more complex pricing logic for your specific business needs. This guide explains how to implement custom pricing logic with Prices as Code.</p>
+
+            <h2>Advanced Pricing Scenarios</h2>
+
+            <p>Here are some examples of advanced pricing scenarios you might need to implement:</p>
+            <ul>
+                <li>Tiered pricing based on usage</li>
+                <li>Volume discounts</li>
+                <li>Region-specific pricing</li>
+                <li>Time-limited promotional pricing</li>
+                <li>Bundle discounts</li>
+                <li>Custom tax handling</li>
+                <li>Dynamic pricing based on external factors</li>
+            </ul>
+
+            <h2>Using JavaScript/TypeScript for Dynamic Pricing</h2>
+
+            <p>When using a JavaScript or TypeScript configuration file, you can include dynamic logic to generate your pricing configuration:</p>
+
+            <div class="highlight">
+                <pre><code class="language-typescript">import { Config } from 'prices-as-code';
+
+// Helper function to calculate tiered pricing
+function calculateTieredPrice(basePrice: number, tier: number, discount: number = 0.1): number {
+  return Math.round(basePrice * (1 - (tier - 1) * discount));
+}
+
+// Generate products for different regions
+function generateRegionalProducts(regions: string[]): any[] {
+  const products = [];
+  
+  for (const region of regions) {
+    products.push({
+      provider: "stripe",
+      name: `Pro Plan (${region})`,
+      description: `Pro plan for ${region} region`,
+      features: [
+        "Unlimited projects",
+        "100GB storage",
+        "Priority support",
+      ],
+      highlight: region === 'US', // Highlight US plan
+      metadata: {
+        region,
+        displayOrder: regions.indexOf(region) + 1,
+      }
+    });
+  }
+  
+  return products;
+}
+
+// Dynamic pricing configuration
+const regions = ['US', 'EU', 'APAC'];
+const basePriceUSD = 1999; // $19.99
+const basePriceEUR = 1799; // €17.99
+const basePriceAUD = 2499; // A$24.99
+
+const regionCurrencies = {
+  'US': { currency: 'usd', basePrice: basePriceUSD },
+  'EU': { currency: 'eur', basePrice: basePriceEUR },
+  'APAC': { currency: 'aud', basePrice: basePriceAUD },
+};
+
+// Generate prices for each region and plan type
+const prices = [];
+regions.forEach((region) => {
+  const { currency, basePrice } = regionCurrencies[region];
+  
+  // Monthly price
+  prices.push({
+    provider: "stripe",
+    name: `Pro Monthly (${region})`,
+    nickname: `Pro Monthly (${region})`,
+    unitAmount: basePrice,
+    currency,
+    type: "recurring",
+    recurring: {
+      interval: "month",
+      intervalCount: 1,
+    },
+    productKey: `pro_plan_${region.toLowerCase()}`,
+    metadata: {
+      region,
+      displayName: `Pro Monthly (${region})`,
+    }
+  });
+  
+  // Annual price (with 20% discount)
+  prices.push({
+    provider: "stripe",
+    name: `Pro Annual (${region})`,
+    nickname: `Pro Annual (${region})`,
+    unitAmount: Math.round(basePrice * 10 * 0.8), // 20% off for annual billing
+    currency,
+    type: "recurring",
+    recurring: {
+      interval: "year",
+      intervalCount: 1,
+    },
+    productKey: `pro_plan_${region.toLowerCase()}`,
+    metadata: {
+      region,
+      displayName: `Pro Annual (${region})`,
+      savings: "20%",
+    }
+  });
+});
+
+const config: Config = {
+  products: [
+    // Basic product available globally
+    {
+      provider: "stripe",
+      name: "Basic Plan",
+      description: "For individuals and small teams",
+      features: ["5 projects", "10GB storage", "Email support"],
+      highlight: false,
+      metadata: {
+        displayOrder: 0,
+        global: true,
+      }
+    },
+    // Region-specific Pro plans
+    ...generateRegionalProducts(regions),
+  ],
+  prices: [
+    // Basic plan prices
+    {
+      provider: "stripe",
+      name: "Basic Monthly",
+      nickname: "Basic Monthly",
+      unitAmount: 999,
+      currency: "usd",
+      type: "recurring",
+      recurring: {
+        interval: "month",
+        intervalCount: 1,
+      },
+      productKey: "basic_plan",
+      metadata: {
+        displayName: "Basic Monthly",
+      }
+    },
+    // All region-specific prices generated above
+    ...prices,
+  ],
+};
+
+export default config;</code></pre>
+            </div>
+
+            <p>This example demonstrates:</p>
+            <ul>
+                <li>Generating products and prices programmatically</li>
+                <li>Creating region-specific pricing</li>
+                <li>Applying different currencies and base prices by region</li>
+                <li>Calculating annual discounts automatically</li>
+                <li>Using metadata to store region information</li>
+            </ul>
+
+            <h2>Using External Data Sources</h2>
+
+            <p>You can also load pricing data from external sources, such as databases or APIs:</p>
+
+            <div class="highlight">
+                <pre><code class="language-typescript">import { Config } from 'prices-as-code';
+import fetch from 'node-fetch';
+import fs from 'fs/promises';
+
+async function generateConfig() {
+  // Example: Load base prices from an API
+  const response = await fetch('https://api.example.com/pricing-data');
+  const pricingData = await response.json();
+  
+  // Example: Load regional settings from a JSON file
+  const regionSettings = JSON.parse(
+    await fs.readFile('./region-settings.json', 'utf8')
+  );
+  
+  // Process and transform the data into our configuration format
+  const products = [];
+  const prices = [];
+  
+  // Process products
+  for (const productData of pricingData.products) {
+    products.push({
+      provider: "stripe",
+      name: productData.name,
+      description: productData.description,
+      features: productData.features,
+      highlight: productData.isHighlighted,
+      metadata: {
+        externalId: productData.id,
+        category: productData.category,
+        // Add any other metadata from the API
+      }
+    });
+    
+    // Process prices for this product
+    for (const priceData of productData.prices) {
+      // Apply regional pricing if available
+      const regions = priceData.regions || ['global'];
+      
+      for (const region of regions) {
+        const regionConfig = regionSettings[region] || regionSettings.default;
+        const adjustedAmount = Math.round(
+          priceData.baseAmount * regionConfig.priceMultiplier
+        );
+        
+        prices.push({
+          provider: "stripe",
+          name: `${priceData.name} (${region})`,
+          nickname: `${priceData.nickname || priceData.name} (${region})`,
+          unitAmount: adjustedAmount,
+          currency: regionConfig.currency,
+          type: priceData.type,
+          recurring: priceData.recurring,
+          productKey: productData.key,
+          metadata: {
+            region,
+            externalId: priceData.id,
+            // Add any other metadata
+          }
+        });
+      }
+    }
+  }
+  
+  return { products, prices };
+}
+
+// Use an async IIFE to generate the configuration
+const config = await generateConfig();
+
+export default config;</code></pre>
+            </div>
+
+            <p>This approach allows you to:</p>
+            <ul>
+                <li>Source pricing data from external systems</li>
+                <li>Apply dynamic transformations and business logic</li>
+                <li>Keep pricing data separate from your code</li>
+                <li>Integrate with existing pricing databases or APIs</li>
+            </ul>
+
+            <h2>Tiered and Volume Pricing</h2>
+
+            <p>For tiered pricing based on usage, you can use Stripe's tiered pricing features:</p>
+
+            <div class="highlight">
+                <pre><code class="language-typescript">import { Config } from 'prices-as-code';
+
+const config: Config = {
+  products: [
+    {
+      provider: "stripe",
+      name: "API Access",
+      description: "Pay-as-you-go API access",
+      features: ["Unlimited users", "24/7 support", "99.9% uptime SLA"],
+      highlight: true,
+      metadata: {
+        category: "api",
+      }
+    },
+  ],
+  prices: [
+    {
+      provider: "stripe",
+      name: "API Requests - Tiered",
+      nickname: "API Requests",
+      currency: "usd",
+      type: "recurring",
+      recurring: {
+        interval: "month",
+        intervalCount: 1,
+      },
+      productKey: "api_access",
+      tiersMode: "graduated",
+      tiers: [
+        { upTo: 1000, unitAmount: 0, flatAmount: 0 }, // First 1,000 requests free
+        { upTo: 10000, unitAmount: 5 }, // $0.05 per request up to 10,000
+        { upTo: 100000, unitAmount: 3 }, // $0.03 per request up to 100,000
+        { upTo: "inf", unitAmount: 2 }, // $0.02 per request thereafter
+      ],
+      metadata: {
+        displayName: "API Requests",
+        description: "Pay only for what you use",
+      }
+    },
+  ],
+};
+
+export default config;</code></pre>
+            </div>
+
+            <h2>Custom Transformation Functions</h2>
+
+            <p>You can also create custom transformation functions to preprocess your configuration before it's synchronized:</p>
+
+            <div class="highlight">
+                <pre><code class="language-typescript">import { Config, pac } from 'prices-as-code';
+
+// Load base configuration
+import baseConfig from './base-pricing.js';
+
+// Custom transformation function
+function applySeasonalPromotion(config: Config, discountPercentage: number = 15): Config {
+  // Create a deep copy of the config
+  const newConfig = JSON.parse(JSON.stringify(config));
+  
+  // Apply promotional pricing to all prices
+  newConfig.prices = newConfig.prices.map(price => {
+    // Skip prices that already have a promotion
+    if (price.metadata?.promotion) {
+      return price;
+    }
+    
+    // Calculate the discounted amount
+    const discountedAmount = Math.round(
+      price.unitAmount * (1 - discountPercentage / 100)
+    );
+    
+    // Create a promotional version of the price
+    return {
+      ...price,
+      name: `${price.name} (Holiday Special)`,
+      nickname: `${price.nickname || price.name} (Holiday Special)`,
+      unitAmount: discountedAmount,
+      metadata: {
+        ...(price.metadata || {}),
+        promotion: 'holiday_2025',
+        originalPrice: price.unitAmount,
+        discountPercentage: `${discountPercentage}%`,
+      }
+    };
+  });
+  
+  // Add a note about the promotion to each product
+  newConfig.products = newConfig.products.map(product => {
+    return {
+      ...product,
+      description: `${product.description} - Now with a ${discountPercentage}% holiday discount!`,
+      metadata: {
+        ...(product.metadata || {}),
+        hasPromotion: true,
+      }
+    };
+  });
+  
+  return newConfig;
+}
+
+// Apply the transformation
+const config = applySeasonalPromotion(baseConfig, 20);
+
+// Use for synchronization
+async function syncPricing() {
+  const result = await pac({
+    config, // Use the transformed config directly
+    providers: [
+      {
+        provider: 'stripe',
+        options: {
+          secretKey: process.env.STRIPE_SECRET_KEY,
+        }
+      }
+    ]
+  });
+  
+  console.log('Sync completed!');
+}
+
+export default config;</code></pre>
+            </div>
+
+            <h2>Next Steps</h2>
+
+            <ul>
+                <li>Learn about <a href="custom-providers.html">Custom Providers</a> to extend the library</li>
+                <li>Explore <a href="metadata.html">Working with Metadata</a> for enhanced flexibility</li>
+                <li>Check out the <a href="../api/index.html">API Documentation</a> for more advanced features</li>
+            </ul>
+        </div>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container">
+            <div class="footer-content">
+                <p>Copyright &copy; 2025 Nate Ross. Distributed by an <a href="https://github.com/wickdninja/prices-as-code/blob/main/LICENSE">MIT license.</a></p>
+                <p><a href="#top" class="back-to-top">Back to top</a></p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../assets/js/main.js"></script>
+</body>
+</html>

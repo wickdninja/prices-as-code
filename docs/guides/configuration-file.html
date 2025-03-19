@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configuration File - Prices as Code</title>
+    <meta name="description" content="Learn about the configuration file format for Prices as Code">
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="icon" href="https://raw.githubusercontent.com/wickdninja/assets/refs/heads/main/PaC.webp">
+</head>
+<body>
+    <header class="site-header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <a href="../index.html">
+                        <img src="https://raw.githubusercontent.com/wickdninja/assets/refs/heads/main/PaC.webp" alt="Prices as Code" width="40">
+                        <span>Prices as Code</span>
+                    </a>
+                </div>
+                <nav class="main-nav">
+                    <ul>
+                        <li><a href="index.html">Guides</a></li>
+                        <li><a href="../api/index.html">API</a></li>
+                        <li><a href="../providers/index.html">Providers</a></li>
+                        <li><a href="https://github.com/wickdninja/prices-as-code" target="_blank">GitHub</a></li>
+                        <li><a href="https://www.npmjs.com/package/prices-as-code" target="_blank">NPM</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main class="content">
+        <div class="container">
+            <h1>Configuration File Format</h1>
+
+            <p>The Prices as Code configuration file is where you define your products and pricing structures. This guide explains the configuration format in detail and provides examples for both TypeScript and YAML formats.</p>
+
+            <h2>File Formats</h2>
+
+            <p>Prices as Code supports both TypeScript/JavaScript and YAML configuration files:</p>
+            <ul>
+                <li><code>.ts</code>, <code>.js</code> - TypeScript/JavaScript configuration</li>
+                <li><code>.yml</code>, <code>.yaml</code> - YAML configuration</li>
+            </ul>
+
+            <h2>Configuration Structure</h2>
+
+            <p>Every configuration file has two main sections:</p>
+
+            <div class="highlight">
+                <pre><code class="language-typescript">// TypeScript example
+import { Config } from 'prices-as-code';
+
+const config: Config = {
+  products: [
+    // Product definitions
+  ],
+  prices: [
+    // Price definitions
+  ]
+};
+
+export default config;</code></pre>
+            </div>
+
+            <h2>Products Configuration</h2>
+
+            <p>The <code>products</code> section defines your product offerings with the following properties:</p>
+
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Property</th>
+                            <th>Type</th>
+                            <th>Required</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>provider</code></td>
+                            <td>string</td>
+                            <td>Yes</td>
+                            <td>The payment provider (e.g., 'stripe', 'recurly')</td>
+                        </tr>
+                        <tr>
+                            <td><code>name</code></td>
+                            <td>string</td>
+                            <td>Yes</td>
+                            <td>The product name</td>
+                        </tr>
+                        <tr>
+                            <td><code>description</code></td>
+                            <td>string</td>
+                            <td>No</td>
+                            <td>A description of the product</td>
+                        </tr>
+                        <tr>
+                            <td><code>features</code></td>
+                            <td>string[]</td>
+                            <td>No</td>
+                            <td>Array of feature descriptions for the product</td>
+                        </tr>
+                        <tr>
+                            <td><code>highlight</code></td>
+                            <td>boolean</td>
+                            <td>No</td>
+                            <td>Whether to highlight this product in UI (e.g., as a recommended option)</td>
+                        </tr>
+                        <tr>
+                            <td><code>metadata</code></td>
+                            <td>object</td>
+                            <td>No</td>
+                            <td>Custom metadata for the product</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>Product Example</h3>
+
+            <div class="highlight">
+                <pre><code class="language-typescript">// TypeScript example
+{
+  provider: "stripe",
+  name: "Pro Plan",
+  description: "For growing businesses",
+  features: [
+    "Unlimited projects",
+    "100GB storage",
+    "Priority support",
+    "Advanced analytics"
+  ],
+  highlight: true,
+  metadata: {
+    displayOrder: 2,
+  }
+}</code></pre>
+            </div>
+
+            <div class="highlight">
+                <pre><code class="language-yaml"># YAML example
+- provider: stripe
+  name: Pro Plan
+  description: For growing businesses
+  features:
+    - Unlimited projects
+    - 100GB storage
+    - Priority support
+    - Advanced analytics
+  highlight: true
+  metadata:
+    displayOrder: 2</code></pre>
+            </div>
+
+            <h2>Prices Configuration</h2>
+
+            <p>The <code>prices</code> section defines the pricing structure for your products with the following properties:</p>
+
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Property</th>
+                            <th>Type</th>
+                            <th>Required</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>provider</code></td>
+                            <td>string</td>
+                            <td>Yes</td>
+                            <td>The payment provider (e.g., 'stripe', 'recurly')</td>
+                        </tr>
+                        <tr>
+                            <td><code>name</code></td>
+                            <td>string</td>
+                            <td>Yes</td>
+                            <td>The name of the price</td>
+                        </tr>
+                        <tr>
+                            <td><code>nickname</code></td>
+                            <td>string</td>
+                            <td>No</td>
+                            <td>A shorter name for display purposes</td>
+                        </tr>
+                        <tr>
+                            <td><code>unitAmount</code></td>
+                            <td>number</td>
+                            <td>Yes</td>
+                            <td>The amount in smallest currency units (e.g., cents for USD)</td>
+                        </tr>
+                        <tr>
+                            <td><code>currency</code></td>
+                            <td>string</td>
+                            <td>Yes</td>
+                            <td>The three-letter currency code (e.g., 'usd', 'eur')</td>
+                        </tr>
+                        <tr>
+                            <td><code>type</code></td>
+                            <td>string</td>
+                            <td>Yes</td>
+                            <td>Price type ('recurring' or 'one_time')</td>
+                        </tr>
+                        <tr>
+                            <td><code>recurring</code></td>
+                            <td>object</td>
+                            <td>Conditionally</td>
+                            <td>Required if type is 'recurring'</td>
+                        </tr>
+                        <tr>
+                            <td><code>productKey</code></td>
+                            <td>string</td>
+                            <td>Yes</td>
+                            <td>The key that links to a product</td>
+                        </tr>
+                        <tr>
+                            <td><code>metadata</code></td>
+                            <td>object</td>
+                            <td>No</td>
+                            <td>Custom metadata for the price</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>Recurring Object Properties</h3>
+
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Property</th>
+                            <th>Type</th>
+                            <th>Required</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>interval</code></td>
+                            <td>string</td>
+                            <td>Yes</td>
+                            <td>Billing interval ('day', 'week', 'month', or 'year')</td>
+                        </tr>
+                        <tr>
+                            <td><code>intervalCount</code></td>
+                            <td>number</td>
+                            <td>Yes</td>
+                            <td>Number of intervals between billings</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>Price Example</h3>
+
+            <div class="highlight">
+                <pre><code class="language-typescript">// TypeScript example
+{
+  provider: "stripe",
+  name: "Pro Monthly",
+  nickname: "Pro Monthly",
+  unitAmount: 1999,
+  currency: "usd",
+  type: "recurring",
+  recurring: {
+    interval: "month",
+    intervalCount: 1,
+  },
+  productKey: "pro_plan",
+  metadata: {
+    displayName: "Pro Monthly",
+    popular: false,
+  }
+}</code></pre>
+            </div>
+
+            <div class="highlight">
+                <pre><code class="language-yaml"># YAML example
+- provider: stripe
+  name: Pro Monthly
+  nickname: Pro Monthly
+  unitAmount: 1999
+  currency: usd
+  type: recurring
+  recurring:
+    interval: month
+    intervalCount: 1
+  productKey: pro_plan
+  metadata:
+    displayName: Pro Monthly
+    popular: false</code></pre>
+            </div>
+
+            <h2>Key Generation and Mapping</h2>
+
+            <p>Prices as Code automatically generates keys for products based on their names, converting them to snake_case format. For example, "Pro Plan" becomes "pro_plan". These keys are used to link prices to their associated products.</p>
+
+            <h2>Metadata</h2>
+
+            <p>Both products and prices support a <code>metadata</code> field for adding custom attributes. This is useful for:</p>
+            <ul>
+                <li>UI display preferences (order, highlighting, etc.)</li>
+                <li>Feature flags</li>
+                <li>Integration with other systems</li>
+                <li>Any other custom data you need to associate with products or prices</li>
+            </ul>
+
+            <h2>Full Configuration Example</h2>
+
+            <p>Here's a complete example showing both products and prices:</p>
+
+            <div class="highlight">
+                <pre><code class="language-typescript">import { Config } from 'prices-as-code';
+
+const config: Config = {
+  products: [
+    {
+      provider: "stripe",
+      name: "Basic Plan",
+      description: "For individuals and small teams",
+      features: ["5 projects", "10GB storage", "Email support"],
+      highlight: false,
+      metadata: {
+        displayOrder: 1,
+      },
+    },
+    {
+      provider: "stripe",
+      name: "Pro Plan",
+      description: "For growing businesses",
+      features: [
+        "Unlimited projects",
+        "100GB storage",
+        "Priority support",
+        "Advanced analytics",
+      ],
+      highlight: true,
+      metadata: {
+        displayOrder: 2,
+      },
+    },
+  ],
+
+  prices: [
+    {
+      provider: "stripe",
+      name: "Basic Monthly",
+      nickname: "Basic Monthly",
+      unitAmount: 999,
+      currency: "usd",
+      type: "recurring",
+      recurring: {
+        interval: "month",
+        intervalCount: 1,
+      },
+      productKey: "basic_plan",
+      metadata: {
+        displayName: "Basic Monthly",
+        popular: false,
+      },
+    },
+    {
+      provider: "stripe",
+      name: "Pro Monthly",
+      nickname: "Pro Monthly",
+      unitAmount: 1999,
+      currency: "usd",
+      type: "recurring",
+      recurring: {
+        interval: "month",
+        intervalCount: 1,
+      },
+      productKey: "pro_plan",
+      metadata: {
+        displayName: "Pro Monthly",
+        popular: false,
+      },
+    },
+  ],
+};
+
+export default config;</code></pre>
+            </div>
+
+            <h2>Next Steps</h2>
+
+            <ul>
+                <li>Learn how to use the <a href="cli.html">Command-Line Interface</a></li>
+                <li>Set up <a href="ci-cd.html">CI/CD Integration</a> for automated pricing updates</li>
+                <li>Explore <a href="metadata.html">Working with Metadata</a> for enhanced flexibility</li>
+            </ul>
+        </div>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container">
+            <div class="footer-content">
+                <p>Copyright &copy; 2025 Nate Ross. Distributed by an <a href="https://github.com/wickdninja/prices-as-code/blob/main/LICENSE">MIT license.</a></p>
+                <p><a href="#top" class="back-to-top">Back to top</a></p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../assets/js/main.js"></script>
+</body>
+</html>
