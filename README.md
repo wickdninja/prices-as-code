@@ -188,6 +188,9 @@ Visit our [documentation website](https://wickdninja.github.io/prices-as-code) f
 - [Configuration Format](https://wickdninja.github.io/prices-as-code/guides/configuration-file)
 - [Command Line Interface](https://wickdninja.github.io/prices-as-code/guides/cli)
 - [Custom Providers](https://wickdninja.github.io/prices-as-code/guides/custom-providers)
+- [CI/CD Integration](https://wickdninja.github.io/prices-as-code/guides/ci-cd)
+- [Working with Metadata](https://wickdninja.github.io/prices-as-code/guides/metadata)
+- [Custom Pricing Logic](https://wickdninja.github.io/prices-as-code/guides/custom-pricing)
 
 ### API Reference
 
