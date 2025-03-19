@@ -1,6 +1,6 @@
 {
   "name": "prices-as-code",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "Prices as Code (PaC) - Define your product pricing schemas with type-safe definitions",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
