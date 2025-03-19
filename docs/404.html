@@ -4,9 +4,83 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Page Not Found - Prices as Code</title>
-    <meta name="description" content="Page not found">
+    <meta name="description" content="The requested page was not found">
     <link rel="stylesheet" href="/assets/css/main.css">
     <link rel="icon" href="https://raw.githubusercontent.com/wickdninja/assets/refs/heads/main/PaC.webp">
+    <style>
+        .not-found-container {
+            text-align: center;
+            padding: 4rem 2rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .not-found-code {
+            font-size: 8rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            background: linear-gradient(90deg, var(--primary-color), #0099ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            line-height: 1;
+        }
+        
+        .not-found-image {
+            max-width: 300px;
+            margin: 2rem auto;
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+            100% { transform: translateY(0px); }
+        }
+        
+        .not-found-title {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+        
+        .not-found-text {
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+        }
+        
+        .not-found-suggestions {
+            margin: 2rem 0;
+            text-align: left;
+            display: inline-block;
+        }
+        
+        .not-found-suggestions h3 {
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+        
+        .suggestion-list {
+            list-style-type: none;
+            padding: 0;
+        }
+        
+        .suggestion-list li {
+            margin-bottom: 0.5rem;
+            background-color: var(--light-bg);
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            transition: var(--transition-standard);
+        }
+        
+        .suggestion-list li:hover {
+            transform: translateX(5px);
+            background-color: rgba(3, 102, 214, 0.1);
+        }
+        
+        .search-container-404 {
+            max-width: 500px;
+            margin: 2rem auto;
+        }
+    </style>
 </head>
 <body>
     <header class="site-header">
@@ -33,11 +107,31 @@
 
     <main class="content">
         <div class="container">
-            <div style="text-align: center; padding: 60px 0;">
-                <img src="https://raw.githubusercontent.com/wickdninja/assets/refs/heads/main/PaC.webp" alt="Prices as Code" width="150" style="margin-bottom: 30px;">
-                <h1>404 - Page Not Found</h1>
-                <p>The page you're looking for doesn't exist or has been moved.</p>
-                <a href="/index.html" class="btn">Go to Homepage</a>
+            <div class="not-found-container">
+                <div class="not-found-code">404</div>
+                <h1 class="not-found-title">Page Not Found</h1>
+                <p class="not-found-text">The page you're looking for doesn't exist or has been moved.</p>
+                
+                <div class="search-container-404">
+                    <input type="text" class="search-box" id="search-404" placeholder="Search the documentation...">
+                    <div class="search-icon">🔍</div>
+                </div>
+                
+                <a href="/index.html" class="btn">Go Home</a>
+                
+                <div class="not-found-image">
+                    <img src="https://raw.githubusercontent.com/wickdninja/assets/refs/heads/main/PaC.webp" alt="Prices as Code" width="200">
+                </div>
+                
+                <div class="not-found-suggestions">
+                    <h3>Popular Pages</h3>
+                    <ul class="suggestion-list">
+                        <li><a href="/guides/getting-started.html">Getting Started Guide</a></li>
+                        <li><a href="/api/index.html">API Reference</a></li>
+                        <li><a href="/providers/stripe.html">Stripe Integration</a></li>
+                        <li><a href="/guides/index.html">All Guides</a></li>
+                    </ul>
+                </div>
             </div>
         </div>
     </main>
@@ -52,5 +146,28 @@
     </footer>
 
     <script src="/assets/js/main.js"></script>
+    <script>
+        // Simple redirect based on common paths
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlPath = window.location.pathname;
+            const searchInput = document.getElementById('search-404');
+            
+            // Add enter key search
+            searchInput.addEventListener('keyup', function(event) {
+                if (event.key === 'Enter') {
+                    window.location.href = `/index.html?search=${encodeURIComponent(searchInput.value)}`;
+                }
+            });
+            
+            // Extract filename from path
+            const pathParts = urlPath.split('/');
+            const filename = pathParts[pathParts.length - 1].replace('.html', '');
+            
+            // Populate search with filename as a starting point
+            if (filename && filename !== '404') {
+                searchInput.value = filename.replace(/-/g, ' ');
+            }
+        });
+    </script>
 </body>
 </html>
