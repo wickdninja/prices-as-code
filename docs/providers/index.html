@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Providers - Prices as Code</title>
+    <meta name="description" content="Supported providers for the Prices as Code TypeScript library">
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="icon" href="https://raw.githubusercontent.com/wickdninja/assets/refs/heads/main/PaC.webp">
+</head>
+<body>
+    <header class="site-header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <a href="../index.html">
+                        <img src="https://raw.githubusercontent.com/wickdninja/assets/refs/heads/main/PaC.webp" alt="Prices as Code" width="40">
+                        <span>Prices as Code</span>
+                    </a>
+                </div>
+                <nav class="main-nav">
+                    <ul>
+                        <li><a href="../guides/index.html">Guides</a></li>
+                        <li><a href="../api/index.html">API</a></li>
+                        <li><a href="index.html" class="active">Providers</a></li>
+                        <li><a href="https://github.com/wickdninja/prices-as-code" target="_blank">GitHub</a></li>
+                        <li><a href="https://www.npmjs.com/package/prices-as-code" target="_blank">NPM</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main class="content">
+        <div class="container">
+            <h1>Providers</h1>
+
+            <p>Prices as Code supports multiple billing providers through an extensible architecture. This section details the currently supported providers and their specific implementations.</p>
+
+            <div class="grid">
+                <div class="card">
+                    <div class="card-header">Stripe</div>
+                    <div class="card-body">
+                        <p>Integration with the Stripe billing platform</p>
+                        <a href="stripe.html">View Details</a>
+                    </div>
+                </div>
+            </div>
+
+            <h2>Adding Custom Providers</h2>
+
+            <p>Prices as Code is designed to be extensible, allowing you to add support for additional billing providers. Learn more about implementing custom providers in the <a href="../guides/custom-providers.html">Custom Providers Guide</a>.</p>
+
+            <div class="api-method">
+                <div class="method-title">Provider Interface</div>
+                <div class="method-description">
+                    <p>Every provider must implement the following interface:</p>
+                </div>
+                
+                <div class="highlight">
+                    <pre><code class="language-typescript">interface Provider {
+  // Initialize the provider with options
+  initialize(options: any): Promise<void>;
+  
+  // Create or update a product
+  syncProduct(product: Product): Promise<any>;
+  
+  // Create or update a price
+  syncPrice(price: Price): Promise<any>;
+  
+  // Get a list of all products
+  listProducts(): Promise<any[]>;
+  
+  // Get a list of all prices
+  listPrices(): Promise<any[]>;
+}</code></pre>
+                </div>
+            </div>
+
+            <div class="note">
+                <p>Check out the <a href="https://github.com/wickdninja/prices-as-code" target="_blank">GitHub repository</a> for more information on implementing custom providers.</p>
+            </div>
+        </div>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container">
+            <div class="footer-content">
+                <p>Copyright &copy; 2025 Nate Ross. Distributed by an <a href="https://github.com/wickdninja/prices-as-code/blob/main/LICENSE">MIT license.</a></p>
+                <p><a href="#top" class="back-to-top">Back to top</a></p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../assets/js/main.js"></script>
+</body>
+</html>

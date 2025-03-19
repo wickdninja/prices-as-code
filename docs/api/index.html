@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Reference - Prices as Code</title>
+    <meta name="description" content="API documentation for the Prices as Code TypeScript library">
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="icon" href="https://raw.githubusercontent.com/wickdninja/assets/refs/heads/main/PaC.webp">
+</head>
+<body>
+    <header class="site-header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <a href="../index.html">
+                        <img src="https://raw.githubusercontent.com/wickdninja/assets/refs/heads/main/PaC.webp" alt="Prices as Code" width="40">
+                        <span>Prices as Code</span>
+                    </a>
+                </div>
+                <nav class="main-nav">
+                    <ul>
+                        <li><a href="../guides/index.html">Guides</a></li>
+                        <li><a href="index.html" class="active">API</a></li>
+                        <li><a href="../providers/index.html">Providers</a></li>
+                        <li><a href="https://github.com/wickdninja/prices-as-code" target="_blank">GitHub</a></li>
+                        <li><a href="https://www.npmjs.com/package/prices-as-code" target="_blank">NPM</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main class="content">
+        <div class="container">
+            <h1>API Reference</h1>
+
+            <p>This section provides detailed documentation for the Prices as Code API.</p>
+
+            <h2>Core API</h2>
+
+            <div class="api-method">
+                <div class="method-title">pac(options: PacOptions): Promise&lt;PacResult&gt;</div>
+                <div class="method-description">
+                    <p>The main function to synchronize your pricing configuration with providers.</p>
+                </div>
+                
+                <div class="parameters">
+                    <h4>Parameters</h4>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Type</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>options</td>
+                                <td>PacOptions</td>
+                                <td>Configuration options for the synchronization</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="return-value">
+                    <h4>Returns</h4>
+                    <p>A Promise that resolves to a PacResult object containing the synchronization results.</p>
+                </div>
+                
+                <div class="example">
+                    <h4>Example</h4>
+                    <div class="highlight">
+                        <pre><code class="language-typescript">import { pac } from 'prices-as-code';
+
+async function syncPricing() {
+  try {
+    const result = await pac({
+      configPath: './pricing.ts',
+      providers: [
+        {
+          provider: 'stripe',
+          options: {
+            secretKey: process.env.STRIPE_SECRET_KEY,
+          }
+        }
+      ]
+    });
+    
+    console.log('Sync result:', result);
+  } catch (error) {
+    console.error('Sync failed:', error);
+  }
+}
+
+syncPricing();</code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <h2>Types</h2>
+
+            <div class="api-method">
+                <div class="method-title">Config</div>
+                <div class="method-description">
+                    <p>Represents the pricing configuration.</p>
+                </div>
+                
+                <div class="parameters">
+                    <h4>Properties</h4>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Type</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>products</td>
+                                <td>Product[]</td>
+                                <td>Array of product definitions</td>
+                            </tr>
+                            <tr>
+                                <td>prices</td>
+                                <td>Price[]</td>
+                                <td>Array of price definitions</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="api-method">
+                <div class="method-title">Product</div>
+                <div class="method-description">
+                    <p>Represents a product definition.</p>
+                </div>
+                
+                <div class="parameters">
+                    <h4>Properties</h4>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Type</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>provider</td>
+                                <td>string</td>
+                                <td>The provider to create the product with (e.g., 'stripe')</td>
+                            </tr>
+                            <tr>
+                                <td>name</td>
+                                <td>string</td>
+                                <td>The name of the product</td>
+                            </tr>
+                            <tr>
+                                <td>description</td>
+                                <td>string</td>
+                                <td>The description of the product</td>
+                            </tr>
+                            <tr>
+                                <td>features</td>
+                                <td>string[]</td>
+                                <td>Features included with the product</td>
+                            </tr>
+                            <tr>
+                                <td>highlight</td>
+                                <td>boolean</td>
+                                <td>Whether to highlight this product as recommended</td>
+                            </tr>
+                            <tr>
+                                <td>metadata</td>
+                                <td>Record&lt;string, any&gt;</td>
+                                <td>Additional metadata to associate with the product</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="api-method">
+                <div class="method-title">Price</div>
+                <div class="method-description">
+                    <p>Represents a price definition.</p>
+                </div>
+                
+                <div class="parameters">
+                    <h4>Properties</h4>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Type</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>provider</td>
+                                <td>string</td>
+                                <td>The provider to create the price with (e.g., 'stripe')</td>
+                            </tr>
+                            <tr>
+                                <td>name</td>
+                                <td>string</td>
+                                <td>The name of the price</td>
+                            </tr>
+                            <tr>
+                                <td>nickname</td>
+                                <td>string</td>
+                                <td>A shorter name for the price that will appear on invoices</td>
+                            </tr>
+                            <tr>
+                                <td>unitAmount</td>
+                                <td>number</td>
+                                <td>The amount in the smallest currency unit (e.g., cents)</td>
+                            </tr>
+                            <tr>
+                                <td>currency</td>
+                                <td>string</td>
+                                <td>The three-letter ISO currency code</td>
+                            </tr>
+                            <tr>
+                                <td>type</td>
+                                <td>string</td>
+                                <td>The price type (e.g., 'one_time', 'recurring')</td>
+                            </tr>
+                            <tr>
+                                <td>recurring</td>
+                                <td>object</td>
+                                <td>Recurring price configuration</td>
+                            </tr>
+                            <tr>
+                                <td>productKey</td>
+                                <td>string</td>
+                                <td>Key of the product this price belongs to</td>
+                            </tr>
+                            <tr>
+                                <td>metadata</td>
+                                <td>Record&lt;string, any&gt;</td>
+                                <td>Additional metadata to associate with the price</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="note">
+                <p>For more detailed API documentation, please refer to the TypeScript type definitions or check the <a href="https://github.com/wickdninja/prices-as-code" target="_blank">GitHub repository</a>.</p>
+            </div>
+        </div>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container">
+            <div class="footer-content">
+                <p>Copyright &copy; 2025 Nate Ross. Distributed by an <a href="https://github.com/wickdninja/prices-as-code/blob/main/LICENSE">MIT license.</a></p>
+                <p><a href="#top" class="back-to-top">Back to top</a></p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../assets/js/main.js"></script>
+</body>
+</html>
