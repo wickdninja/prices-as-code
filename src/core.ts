@@ -137,24 +137,64 @@ export async function pricesAsCode(options: Partial<PaCOptions> = {}): Promise<S
     const config = await readConfigFromFile(resolvedOptions.configPath || '');
     
     // Validate config with Zod
-    const validatedConfig = ConfigSchema.parse(config);
-    
-    // Sync with providers
-    const result = await syncProviders(validatedConfig, resolvedOptions);
-    
-    // Save updated configuration if needed
-    if (result.configUpdated) {
-      await writeConfigToFile(resolvedOptions.configPath || '', result.config);
+    try {
+      const validatedConfig = ConfigSchema.parse(config);
+      
+      // Sync with providers
+      const result = await syncProviders(validatedConfig, resolvedOptions);
+      
+      // Save updated configuration if needed
+      if (result.configUpdated) {
+        await writeConfigToFile(resolvedOptions.configPath || '', result.config);
+      }
+      
+      console.log(
+        '✨ Synchronization completed successfully',
+        result.configUpdated ? 'with updates' : 'without updates'
+      );
+      
+      return result;
+    } catch (validationError: unknown) {
+      // Provide a more user-friendly error message for validation errors
+      if (validationError && 
+          typeof validationError === 'object' && 
+          'name' in validationError && 
+          validationError.name === 'ZodError' &&
+          'issues' in validationError) {
+        
+        // Safely access Zod error properties
+        const zodError = validationError as { issues: Array<{ code: string; message: string; path: (string | number)[] }> };
+        const issues = zodError.issues || [];
+        
+        if (issues.length > 0) {
+          // Check for common patterns in validation errors
+          if (issues.some(issue => 
+            issue.code === 'invalid_union_discriminator' && 
+            typeof issue.message === 'string' &&
+            issue.message.includes("Expected 'stripe'"))) {
+            throw new Error(
+              `Configuration validation failed: Your products and prices are missing the 'provider' field. ` +
+              `Each product and price must have a 'provider' field set to 'stripe'. ` +
+              `Please update your configuration file to include this field.`
+            );
+          }
+          
+          // Generic validation error with cleaner formatting
+          const errors = issues.map(issue => {
+            // Format the path in a more readable way
+            const path = issue.path.join('.');
+            return `- ${path}: ${issue.message}`;
+          }).join('\n');
+          
+          throw new Error(`Configuration validation failed:\n${errors}`);
+        }
+      }
+      
+      // Re-throw the original error if we couldn't format it
+      throw validationError;
     }
-    
-    console.log(
-      '✨ Synchronization completed successfully',
-      result.configUpdated ? 'with updates' : 'without updates'
-    );
-    
-    return result;
   } catch (error) {
-    console.error('❌ Synchronization failed:', error);
+    console.error('❌ Synchronization failed:', error instanceof Error ? error.message : String(error));
     throw error;
   }
 }

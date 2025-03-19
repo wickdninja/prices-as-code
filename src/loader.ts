@@ -23,6 +23,24 @@ export async function readConfigFromFile(configPath: string): Promise<Config> {
       throw new Error(`Unsupported file format: ${extension}. Please use .ts, .js, .mjs, .yml, or .yaml`);
     }
   } catch (error) {
+    // Improve error messages for common issues
+    if (error instanceof Error) {
+      if (error.message.includes('Cannot find module') && error.message.includes(configPath)) {
+        throw new Error(`Configuration file not found or inaccessible: ${configPath}`);
+      }
+      
+      if (error.message.includes('Unexpected token') || error.message.includes('Invalid YAML')) {
+        throw new Error(`Invalid syntax in configuration file: ${configPath}. Please check your file format.`);
+      }
+      
+      // Add a hint for schema validation errors
+      if (error.message.includes('validation failed')) {
+        console.error(`❌ Error loading configuration from ${configPath}:`, error);
+        throw error;
+      }
+    }
+    
+    // Log the original error and rethrow
     console.error(`❌ Error loading configuration from ${configPath}:`, error);
     throw error;
   }
@@ -69,6 +87,34 @@ export function loadYamlConfig(configPath: string): Config {
     // Validate with Zod schema
     return ConfigSchema.parse(config);
   } catch (error) {
+    // For validation errors, format them nicely before rethrowing
+    if (error && 
+        typeof error === 'object' && 
+        'name' in error && 
+        error.name === 'ZodError' &&
+        'issues' in error) {
+        
+      const zodError = error as { issues: Array<{ code: string; message: string; path: (string | number)[] }> };
+      const issues = zodError.issues || [];
+      
+      if (issues.length > 0) {
+        // Check for common patterns in validation errors
+        if (issues.some(issue => 
+          issue.code === 'invalid_union_discriminator' && 
+          typeof issue.message === 'string' &&
+          issue.message.includes("Expected 'stripe'"))) {
+          
+          const friendlyError = new Error(
+            `Configuration validation failed: Your products and prices are missing the 'provider' field. ` +
+            `Each product and price must have a 'provider' field set to 'stripe'. ` +
+            `Please update your configuration file to include this field.`
+          );
+          throw friendlyError;
+        }
+      }
+    }
+    
+    // For other errors, log and rethrow
     console.error(`❌ Error loading YAML config from ${configPath}:`, error);
     throw error;
   }
