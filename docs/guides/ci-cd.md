@@ -212,13 +212,13 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            - v1-dependencies-{{ checksum "package.json" }}
+            - v1-dependencies-{% raw %}{{ checksum "package.json" }}{% endraw %}
             - v1-dependencies-
       - run: npm ci
       - save_cache:
           paths:
             - node_modules
-          key: v1-dependencies-{{ checksum "package.json" }}
+          key: v1-dependencies-{% raw %}{{ checksum "package.json" }}{% endraw %}
       - run: npx prices-as-code validate pricing/prices.yml
 
   sync-pricing:
@@ -228,7 +228,7 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            - v1-dependencies-{{ checksum "package.json" }}
+            - v1-dependencies-{% raw %}{{ checksum "package.json" }}{% endraw %}
             - v1-dependencies-
       - run: npm ci
       - run: npx prices-as-code sync pricing/prices.yml
