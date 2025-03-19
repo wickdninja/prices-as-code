@@ -1,0 +1,5 @@
+repository:
+  name: prices-as-code
+  description: Define your product pricing schemas with type-safe definitions
+  homepage: https://wickdninja.github.io/prices-as-code
+  topics: prices-as-code, npm-package, typescript, pricing

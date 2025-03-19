@@ -1,146 +1,208 @@
-# Stripe-PaC (Prices as Code)
+# Prices as Code (PaC)
 
-Define your Stripe products and prices as YAML code, similar to Infrastructure as Code (IaC), but for Stripe pricing.
+<p align="center">
+  <img src="https://raw.githubusercontent.com/wickdninja/assets/refs/heads/main/PaC.webp" alt="Prices as Code" width="400" />
+</p>
 
-## Features
+Define your product pricing schemas with type-safe definitions and synchronize them across multiple providers.
 
-- Define your Stripe products and prices in YAML format
-- Synchronize your pricing configuration with Stripe
-- Automatically handle updating existing products and creating new prices
-- Track changes to your pricing structure in version control
-- Use metadata-based keys for stable references
+## 🚀 Features
+
+- **Type-Safe**: Use TypeScript and Zod schemas to define your pricing models with full type safety
+- **Declarative**: Define your products and prices in code, sync them to providers
+- **Idempotent**: Run it multiple times, only changes what's needed
+- **Metadata Support**: Add custom metadata to your products and prices
+- **YAML or TypeScript**: Define your pricing in either YAML or TypeScript format
+- **Extensible**: Easily add support for your own billing providers
 
 ## Installation
 
 ```bash
-npm install stripe-pac
+npm install prices-as-code
 ```
 
-## Usage
+## Quick Start
 
-### 1. Create a YAML Configuration File
+### 1. Create a pricing configuration file (pricing.ts)
 
-Create a `prices.yml` file in your project:
+```typescript
+import { Config } from "prices-as-code";
 
-```yaml
-products:
-  - name: Free Plan
-    description: Basic features for individuals
-    metadata:
-      key: free
-      features:
-        - Core feature 1
-        - Core feature 2
-      highlight: false
+const config: Config = {
+  products: [
+    {
+      provider: "stripe",
+      name: "Basic Plan",
+      description: "For individuals and small teams",
+      features: ["5 projects", "10GB storage", "Email support"],
+      highlight: false,
+      metadata: {
+        displayOrder: 1,
+      },
+    },
+    {
+      provider: "stripe",
+      name: "Pro Plan",
+      description: "For growing businesses",
+      features: ["Unlimited projects", "100GB storage", "Priority support"],
+      highlight: true,
+      metadata: {
+        displayOrder: 2,
+      },
+    },
+  ],
+  prices: [
+    {
+      provider: "stripe",
+      name: "Basic Monthly",
+      nickname: "Basic Monthly",
+      unitAmount: 999, // $9.99
+      currency: "usd",
+      type: "recurring",
+      recurring: {
+        interval: "month",
+        intervalCount: 1,
+      },
+      productKey: "basic_plan",
+      metadata: {
+        displayName: "Basic Monthly",
+      },
+    },
+    {
+      provider: "stripe",
+      name: "Pro Monthly",
+      nickname: "Pro Monthly",
+      unitAmount: 1999, // $19.99
+      currency: "usd",
+      type: "recurring",
+      recurring: {
+        interval: "month",
+        intervalCount: 1,
+      },
+      productKey: "pro_plan",
+      metadata: {
+        displayName: "Pro Monthly",
+      },
+    },
+  ],
+};
 
-  - name: Pro Plan
-    description: Advanced features for professionals
-    metadata:
-      key: pro
-      features:
-        - Core feature 1
-        - Core feature 2
-        - Pro feature 1
-        - Pro feature 2
-      highlight: true
-
-prices:
-  - nickname: Free Monthly
-    unit_amount: 0
-    currency: usd
-    type: recurring
-    active: true
-    product_well_known_id: free
-    recurring:
-      interval: month
-      interval_count: 1
-    metadata:
-      plan_code: free_monthly
-      tier: free
-
-  - nickname: Pro Monthly
-    unit_amount: 1999
-    currency: usd
-    type: recurring
-    active: true
-    product_well_known_id: pro
-    recurring:
-      interval: month
-      interval_count: 1
-    metadata:
-      plan_code: pro_monthly
-      tier: pro
+export default config;
 ```
 
-### 2. Use the Library in Your Code
+### 2. Set up environment variables
 
-```javascript
-import { stripePaC } from 'stripe-pac';
+```bash
+# .env file
+STRIPE_SECRET_KEY=sk_test_...
+```
+
+### 3. Run the synchronization
+
+```bash
+npx prices-as-code pricing.ts
+```
+
+## CLI Options
+
+```
+prices-as-code [configPath] [options]
+
+Options:
+  --env=<path>          Path to .env file
+  --stripe-key=<key>    Stripe API key
+```
+
+## Supported Providers
+
+### Stripe
+
+The Stripe provider allows you to sync products and prices to your Stripe account.
+
+Required environment variables:
+
+- `STRIPE_SECRET_KEY`: Your Stripe secret key
+- `STRIPE_API_VERSION` (optional): Stripe API version to use
+
+
+## Programmatic Usage
+
+```typescript
+import { pac } from "prices-as-code";
 
 async function syncPricing() {
   try {
-    // Make sure STRIPE_SECRET_KEY is in your .env file
-    const result = await stripePaC({
-      configPath: './prices.yml', // Path to your YAML config
+    const result = await pac({
+      configPath: "./pricing.ts",
+      providers: [
+        {
+          provider: "stripe",
+          options: {
+            secretKey: process.env.STRIPE_SECRET_KEY,
+            apiVersion: "2025-02-24",
+          },
+        },
+      ],
     });
-    
-    console.log('Sync completed!');
-    console.log(`Updated products: ${result.config.products.length}`);
-    console.log(`Updated prices: ${result.config.prices.length}`);
+
+    console.log("Sync result:", result);
   } catch (error) {
-    console.error('Error:', error);
+    console.error("Sync failed:", error);
   }
 }
 
 syncPricing();
 ```
 
-### 3. Using the CLI Tool
+## Adding Your Own Provider
 
-You can also use the included CLI tool:
+You can extend the library with your own providers by implementing the `ProviderClient` interface:
 
-```bash
-# Using npx
-npx stripe-pac ./prices.yml
+```typescript
+import { ProviderClient, Product, Price } from "prices-as-code";
 
-# Or if installed globally
-stripe-pac ./prices.yml
+export class MyCustomProvider implements ProviderClient {
+  constructor(options: any) {
+    // Initialize your provider client
+  }
 
-# Specify an environment file
-stripe-pac ./prices.yml --env=.env.production
+  async syncProducts(products: Product[]): Promise<Product[]> {
+    // Implement product synchronization
+    return products;
+  }
+
+  async syncPrices(prices: Price[]): Promise<Price[]> {
+    // Implement price synchronization
+    return prices;
+  }
+}
 ```
 
-## Configuration
+## 📖 Documentation
 
-### Products
+Visit our [documentation website](https://wickdninja.github.io/prices-as-code) for comprehensive guides and API reference.
 
-Properties for products:
+### Guides
 
-- `name`: The name of the product
-- `description`: A description of the product
-- `metadata`: Additional data to associate with the product
-  - `key`: A unique identifier for the product (generated from name if not provided)
-  - `features`: List of features (can be an array or JSON string)
-  - `highlight`: Whether to highlight this product (boolean or string)
+- [Getting Started](https://wickdninja.github.io/prices-as-code/guides/getting-started)
+- [Configuration Format](https://wickdninja.github.io/prices-as-code/guides/configuration-file)
+- [Command Line Interface](https://wickdninja.github.io/prices-as-code/guides/cli)
+- [Custom Providers](https://wickdninja.github.io/prices-as-code/guides/custom-providers)
 
-### Prices
+### API Reference
 
-Properties for prices:
+- [Main API](https://wickdninja.github.io/prices-as-code/api)
+- [Stripe Provider](https://wickdninja.github.io/prices-as-code/providers/stripe)
 
-- `nickname`: The display name of the price
-- `unit_amount`: The price amount in cents
-- `currency`: The three-letter ISO currency code
-- `type`: Either `'one_time'` or `'recurring'`
-- `active`: Whether the price is active
-- `product_well_known_id`: The key of the product this price belongs to
-- `recurring`: For recurring prices
-  - `interval`: Billing frequency (`'day'`, `'week'`, `'month'` or `'year'`)
-  - `interval_count`: Number of intervals between billings
-- `metadata`: Additional data to associate with the price
-  - `key`: A unique identifier for the price (generated from plan_code if not provided)
-  - `plan_code`: A code for the plan (recommended)
-  - Any other metadata you want to store
+## 🧩 Why Prices as Code?
 
-## License
+Managing pricing configurations across multiple systems is challenging. Prices as Code provides:
+
+1. **Single Source of Truth**: Define your pricing once, deploy everywhere
+2. **Type Safety**: Catch errors before they happen with TypeScript validation
+3. **Version Control**: Track pricing changes alongside your codebase
+4. **CI/CD Integration**: Automate pricing updates as part of your deployment pipeline
+
+## 📄 License
 
 MIT

@@ -1,36 +1,69 @@
 {
-  "name": "stripe-pac",
-  "version": "0.1.0",
-  "description": "Prices as Code (PaC) for Stripe - Define your Stripe products and prices in YAML",
+  "name": "prices-as-code",
+  "version": "2.0.0",
+  "description": "Prices as Code (PaC) - Define your product pricing schemas with type-safe definitions",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "type": "module",
   "bin": {
-    "stripe-pac": "lib/cli.js"
+    "prices-as-code": "lib/cli.js"
   },
   "scripts": {
     "build": "tsc",
     "prepublishOnly": "npm run build",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "NODE_OPTIONS=--experimental-vm-modules jest",
+    "test:watch": "NODE_OPTIONS=--experimental-vm-modules jest --watch",
+    "test:coverage": "NODE_OPTIONS=--experimental-vm-modules jest --coverage",
+    "test:unit": "NODE_OPTIONS=--experimental-vm-modules jest src/__tests__/enhanced/",
+    "test:integration": "NODE_OPTIONS=--experimental-vm-modules jest --testPathPattern=integration",
+    "test:e2e": "NODE_OPTIONS=--experimental-vm-modules jest --testPathPattern=e2e",
+    "test:enhanced": "NODE_OPTIONS=--experimental-vm-modules jest src/__tests__/enhanced/",
+    "test:integration:stripe": "NODE_OPTIONS=--experimental-vm-modules jest --testPathPattern=integration/stripe",
+    "test:all": "NODE_OPTIONS=--experimental-vm-modules jest",
+    "test:report": "node scripts/generate-test-report.js",
+    "test:report:unit": "node scripts/generate-test-report.js --unit",
+    "test:report:integration": "node scripts/generate-test-report.js --integration",
+    "test:report:e2e": "node scripts/generate-test-report.js --e2e",
+    "test:report:all": "node scripts/generate-test-report.js --all",
+    "lint": "eslint --ext .ts ./src",
+    "lint:fix": "eslint --ext .ts ./src --fix",
+    "typecheck": "tsc --noEmit"
   },
   "keywords": [
-    "stripe",
     "prices",
     "products",
-    "yaml",
+    "stripe",
+    "paddle",
+    "chargebee",
+    "infrastructure-as-code",
     "pac",
-    "infrastructure-as-code"
+    "prices-as-code"
   ],
-  "author": "",
+  "author": "Nate Ross <nate@n8rs.dev> (https://nateross.dev)",
   "license": "MIT",
+  "homepage": "https://wickdninja.github.io/prices-as-code/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wickdninja/prices-as-code.git"
+  },
+  "bugs": {
+    "url": "https://github.com/wickdninja/prices-as-code/issues"
+  },
   "dependencies": {
     "dotenv": "^16.3.1",
     "js-yaml": "^4.1.0",
-    "stripe": "^14.12.0"
+    "stripe": "^14.12.0",
+    "zod": "^3.22.4"
   },
   "devDependencies": {
+    "@types/jest": "^29.5.12",
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^20.11.0",
+    "@typescript-eslint/eslint-plugin": "^6.19.0",
+    "@typescript-eslint/parser": "^6.19.0",
+    "eslint": "^8.56.0",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.1",
     "typescript": "^5.3.3"
   },
   "engines": {

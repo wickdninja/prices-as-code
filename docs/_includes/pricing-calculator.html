@@ -1,0 +1,80 @@
+<div id="pricing-calculator" class="pricing-calculator">
+  <h3>Price Calculator</h3>
+  
+  <div class="options">
+    <div class="option">
+      <input type="radio" id="basic-monthly" name="price-option" value="9.99" checked>
+      <label for="basic-monthly">Basic Monthly ($9.99/mo)</label>
+    </div>
+    <div class="option">
+      <input type="radio" id="basic-annual" name="price-option" value="7.99">
+      <label for="basic-annual">Basic Annual ($7.99/mo)</label>
+    </div>
+    <div class="option">
+      <input type="radio" id="pro-monthly" name="price-option" value="19.99">
+      <label for="pro-monthly">Pro Monthly ($19.99/mo)</label>
+    </div>
+    <div class="option">
+      <input type="radio" id="pro-annual" name="price-option" value="16.99">
+      <label for="pro-annual">Pro Annual ($16.99/mo)</label>
+    </div>
+  </div>
+  
+  <div class="quantity">
+    <label for="quantity">Quantity:</label>
+    <input type="number" id="quantity" name="quantity" min="1" value="1">
+  </div>
+  
+  <div class="total">
+    <h4>Total Monthly Price: <span class="total-price">$9.99</span></h4>
+  </div>
+</div>
+
+<style>
+  .pricing-calculator {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin: 2rem 0;
+    border: 1px solid #e9ecef;
+  }
+  
+  .pricing-calculator h3 {
+    margin-top: 0;
+    margin-bottom: 1rem;
+  }
+  
+  .pricing-calculator .options {
+    margin-bottom: 1.5rem;
+  }
+  
+  .pricing-calculator .option {
+    margin-bottom: 0.5rem;
+  }
+  
+  .pricing-calculator .quantity {
+    margin-bottom: 1.5rem;
+  }
+  
+  .pricing-calculator .quantity input {
+    width: 80px;
+    padding: 0.5rem;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+  }
+  
+  .pricing-calculator .total {
+    background-color: #e9ecef;
+    padding: 1rem;
+    border-radius: 4px;
+  }
+  
+  .pricing-calculator .total h4 {
+    margin: 0;
+  }
+  
+  .pricing-calculator .total-price {
+    font-weight: bold;
+    color: #0366d6;
+  }
+</style>

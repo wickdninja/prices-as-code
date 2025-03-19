@@ -1,323 +1,160 @@
-import Stripe from 'stripe';
-import { StripePacConfig, StripePacOptions, SyncResult } from './types';
-import { loadYamlConfig } from './loader';
-import dotenv from 'dotenv';
+import {
+  Config,
+  ConfigSchema,
+  PaCOptions,
+  SyncResult,
+  ProviderOptions
+} from './types.js';
+import { readConfigFromFile, writeConfigToFile } from './loader.js';
+import { initializeProviders } from './providers/index.js';
 import path from 'path';
+import dotenv from 'dotenv';
 
 /**
- * Initialize Stripe with API key
+ * Load environment variables and validate options
  */
-export function initializeStripe(options: StripePacOptions = {}): Stripe {
-  let stripeSecretKey = options.stripeSecretKey;
+export function loadEnvironment(options?: Partial<PaCOptions>): PaCOptions {
+  // Load .env file
+  dotenv.config({ path: path.resolve(process.cwd(), '.env') });
   
-  // If no key provided, try to load from environment
-  if (!stripeSecretKey) {
-    // Load environment variables if not already loaded
-    dotenv.config({ path: path.resolve(process.cwd(), '.env') });
-    stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+  // Default config path
+  const configPath = options?.configPath || path.resolve(process.cwd(), 'pricing.ts');
+  
+  // Auto-detect providers from environment if not specified
+  const providers: ProviderOptions[] = options?.providers || [];
+  
+  if (providers.length === 0) {
+    // Try to detect Stripe configuration
+    if (process.env.STRIPE_SECRET_KEY) {
+      providers.push({
+        provider: 'stripe',
+        options: {
+          secretKey: process.env.STRIPE_SECRET_KEY,
+          apiVersion: process.env.STRIPE_API_VERSION
+        }
+      });
+    }
+    
+    // Recurly support removed from public API
   }
   
-  if (!stripeSecretKey) {
-    throw new Error('STRIPE_SECRET_KEY not found. Please provide it in options or set in environment.');
-  }
-
-  return new Stripe(stripeSecretKey, {
-    apiVersion: options.stripeApiVersion || '2025-02-24.acacia',
-  });
+  return {
+    configPath,
+    providers
+  };
 }
 
 /**
- * Process the configuration to ensure all required fields and references
+ * Group configuration by provider
  */
-export function addWellKnownIds(config: StripePacConfig): StripePacConfig {
-  // Parse features if they're strings
-  config.products.forEach((product) => {
-    if (typeof product.metadata.features === 'string') {
-      try {
-        product.metadata.features = JSON.parse(product.metadata.features as string);
-      } catch (e) {
-        // If it's not valid JSON, leave it as is
-      }
-    }
-  });
-
-  // Add key to products if not present
-  config.products.forEach((product) => {
-    if (!product.metadata.key) {
-      // Generate a key based on the product name
-      const name = product.name.toLowerCase().replace(/\s+/g, '_');
-      product.metadata.key = name;
-    }
-  });
-
-  // Add key to prices if not present
-  config.prices.forEach((price) => {
-    if (!price.metadata.key) {
-      // Generate a key based on the plan_code
-      const planCode =
-        typeof price.metadata.plan_code === 'string'
-          ? price.metadata.plan_code
-          : price.metadata.plan_code?.toString();
-      price.metadata.key = planCode || `price_${Date.now()}`;
-    }
-
-    // Fix for renamed products (example: "basic" -> "free")
-    if (price.product_well_known_id === 'basic') {
-      price.product_well_known_id = 'free';
-    }
-
-    // Save the product_well_known_id for later reference if it exists
-    if (price.product_well_known_id) {
-      // This property is just for our script - doesn't get sent to Stripe
-      price._product_well_known_id = price.product_well_known_id;
-      delete price.product_well_known_id; // Remove so it doesn't confuse Stripe
-    }
-  });
-
-  return config;
+export function groupByProvider(config: Config): Record<string, Config> {
+  const result: Record<string, Config> = {};
+  
+  // Get unique providers from products and prices
+  const providers = new Set([
+    ...config.products.map(p => p.provider),
+    ...config.prices.map(p => p.provider)
+  ]);
+  
+  // Create config for each provider
+  for (const provider of providers) {
+    result[provider] = {
+      products: config.products.filter(p => p.provider === provider),
+      prices: config.prices.filter(p => p.provider === provider)
+    };
+  }
+  
+  return result;
 }
 
 /**
- * Sync products and prices to Stripe
+ * Synchronize products and prices with providers
  */
-export async function syncStripe(
-  stripe: Stripe,
-  config: StripePacConfig
+export async function syncProviders(
+  config: Config,
+  options: PaCOptions
 ): Promise<SyncResult> {
-  console.log('🚀 Starting Stripe sync with metadata-based IDs...');
-
-  // First ensure all entities have keys
-  config = addWellKnownIds(config);
-
-  // Map to track product keys to Stripe IDs
-  const productIdMap = new Map();
-  let configUpdated = false;
-
-  // Sync Products first using keys
-  for (const product of config.products) {
-    try {
-      const key = product.metadata.key;
-      console.log(`📋 Processing product: ${product.name} (key: ${key})`);
-
-      // Search for product by well-known ID in metadata
-      const productList = await stripe.products.list({
-        limit: 100,
-      });
-
-      // Find product with matching key in metadata
-      const existingProduct = productList.data.find(
-        (p) => p.metadata && p.metadata.key === key
-      );
-
-      // Ensure features is an array before stringify
-      let features = product.metadata.features;
-      if (Array.isArray(features)) {
-        features = JSON.stringify(features);
-      } else if (typeof features === 'string') {
-        // Leave it as is if it's already a string
-      } else {
-        features = JSON.stringify([]);
-      }
-
-      // Ensure highlight is a string
-      let highlight = product.metadata.highlight;
-      if (typeof highlight !== 'string') {
-        highlight = highlight ? 'true' : 'false';
-      }
-
-      if (existingProduct) {
-        console.log(`📋 Found existing product with key: ${key}`);
-
-        // Update the product
-        await stripe.products.update(existingProduct.id, {
-          name: product.name,
-          description: product.description,
-          metadata: {
-            ...product.metadata,
-            features: features as string,
-            highlight: highlight as string,
-          },
-          active: true,
-        });
-
-        // Store the mapping
-        productIdMap.set(key, existingProduct.id);
-
-        // Update our config with the Stripe ID if needed
-        if (!product.id || product.id !== existingProduct.id) {
-          product.id = existingProduct.id;
-          configUpdated = true;
-        }
-
-        console.log(
-          `✅ Updated product: ${product.name} (ID: ${existingProduct.id})`
-        );
-      } else {
-        console.log(`📋 Creating new product with key: ${key}`);
-
-        // Create a new product with the key
-        const newProduct = await stripe.products.create({
-          name: product.name,
-          description: product.description,
-          metadata: {
-            ...product.metadata,
-            features: features as string,
-            highlight: highlight as string,
-          },
-        });
-
-        // Store the mapping
-        productIdMap.set(key, newProduct.id);
-
-        // Update our config with the new ID
-        product.id = newProduct.id;
+  console.log('🚀 Starting synchronization with providers...');
+  
+  try {
+    // Initialize providers
+    const { providers } = initializeProviders(options.providers);
+    let configUpdated = false;
+    let updatedProducts = [...config.products];
+    let updatedPrices = [...config.prices];
+    
+    // Sync with each provider
+    for (const [providerName, provider] of Object.entries(providers)) {
+      console.log(`📌 Syncing with ${providerName}...`);
+      
+      // Sync products first
+      updatedProducts = await provider.syncProducts(updatedProducts);
+      
+      // Sync prices next
+      updatedPrices = await provider.syncPrices(updatedPrices);
+      
+      // Check if anything was updated
+      const productsChanged = JSON.stringify(updatedProducts) !== JSON.stringify(config.products);
+      const pricesChanged = JSON.stringify(updatedPrices) !== JSON.stringify(config.prices);
+      
+      if (productsChanged || pricesChanged) {
         configUpdated = true;
-
-        console.log(
-          `✅ Created product: ${product.name} (ID: ${newProduct.id})`
-        );
       }
-    } catch (error) {
-      console.error(`❌ Error syncing product ${product.name}:`, error);
     }
+    
+    // Create updated config
+    const updatedConfig = {
+      products: updatedProducts,
+      prices: updatedPrices
+    };
+    
+    return {
+      config: updatedConfig,
+      configUpdated
+    };
+  } catch (error) {
+    console.error('❌ Error during synchronization:', error);
+    throw error;
   }
+}
 
-  // Then sync Prices using keys
-  for (const price of config.prices) {
-    try {
-      const wellKnownId = price.metadata.key;
-
-      // First, try to use the explicit product_well_known_id we set earlier
-      let productWellKnownId = price._product_well_known_id;
-      let stripeProductId = null;
-
-      // Get the product ID from our mapping
-      if (productWellKnownId) {
-        stripeProductId = productIdMap.get(productWellKnownId);
-        console.log(
-          `📋 Using product_well_known_id [${productWellKnownId}] for price [${price.nickname}]`
-        );
-      }
-
-      // If we still don't have a product ID, it's an error
-      if (!stripeProductId) {
-        console.error(
-          `❌ Could not determine product for price: ${price.nickname}`
-        );
-        continue;
-      }
-
-      console.log(
-        `💰 Processing price: ${price.nickname} (key: ${wellKnownId})`
-      );
-
-      // Search for price by well-known ID in metadata
-      const priceList = await stripe.prices.list({
-        limit: 100,
-      });
-
-      // Find price with matching key in metadata
-      const existingPrice = priceList.data.find(
-        (p) => p.metadata && p.metadata.key === wellKnownId
-      );
-
-      if (existingPrice) {
-        console.log(`💰 Found existing price with key: ${wellKnownId}`);
-
-        // Prices are immutable, so we can only update certain fields like metadata
-        const priceMatchesConfig =
-          existingPrice.unit_amount === price.unit_amount &&
-          existingPrice.currency === price.currency &&
-          (!price.recurring ||
-            (existingPrice.recurring?.interval === price.recurring.interval &&
-              existingPrice.recurring?.interval_count ===
-                price.recurring.interval_count));
-
-        if (priceMatchesConfig) {
-          console.log(
-            `✅ Existing price matches config, updating metadata if needed`
-          );
-
-          // Update just the metadata if needed
-          await stripe.prices.update(existingPrice.id, {
-            metadata: price.metadata,
-            active: price.active !== false,
-          });
-
-          // Update our config with the Stripe ID
-          if (!price.id || price.id !== existingPrice.id) {
-            price.id = existingPrice.id;
-            configUpdated = true;
-          }
-        } else {
-          console.log(
-            `⚠️ Existing price attributes don't match config, creating new version`
-          );
-
-          // Create a new price with the same key but updated attributes
-          const priceData: Stripe.PriceCreateParams = {
-            product: stripeProductId,
-            nickname: price.nickname,
-            unit_amount: price.unit_amount,
-            currency: price.currency,
-            metadata: price.metadata,
-            active: price.active !== false,
-          };
-
-          // Only add recurring for recurring prices
-          if (price.type === 'recurring' && price.recurring) {
-            priceData.recurring = price.recurring;
-          }
-
-          const newPrice = await stripe.prices.create(priceData);
-
-          // Deactivate the old price
-          await stripe.prices.update(existingPrice.id, {
-            active: false,
-            metadata: {
-              ...existingPrice.metadata,
-              replaced_by: newPrice.id,
-            },
-          });
-
-          // Update our config with the new ID
-          price.id = newPrice.id;
-          configUpdated = true;
-
-          console.log(
-            `✅ Created new price version: ${price.nickname} (ID: ${newPrice.id})`
-          );
-        }
-      } else {
-        console.log(`💰 Creating new price with key: ${wellKnownId}`);
-
-        // Create a new price with the key
-        const priceData: Stripe.PriceCreateParams = {
-          product: stripeProductId,
-          nickname: price.nickname,
-          unit_amount: price.unit_amount,
-          currency: price.currency,
-          metadata: price.metadata,
-          active: price.active !== false,
-        };
-
-        // Only add recurring for recurring prices
-        if (price.type === 'recurring' && price.recurring) {
-          priceData.recurring = price.recurring;
-        }
-
-        const newPrice = await stripe.prices.create(priceData);
-
-        // Update our config with the new ID
-        price.id = newPrice.id;
-        configUpdated = true;
-
-        console.log(`✅ Created price: ${price.nickname} (ID: ${newPrice.id})`);
-      }
-    } catch (error) {
-      console.error(`❌ Error syncing price ${price.nickname}:`, error);
+/**
+ * Main entry point for the Prices as Code tool
+ */
+export async function pricesAsCode(options: Partial<PaCOptions> = {}): Promise<SyncResult> {
+  try {
+    // Load environment and options
+    const resolvedOptions = loadEnvironment(options);
+    
+    // Validate providers
+    if (resolvedOptions.providers.length === 0) {
+      throw new Error('No providers configured. Please check environment variables or provide provider options.');
     }
+    
+    console.log(`📝 Loading configuration from ${resolvedOptions.configPath}`);
+    
+    // Load configuration
+    const config = await readConfigFromFile(resolvedOptions.configPath || '');
+    
+    // Validate config with Zod
+    const validatedConfig = ConfigSchema.parse(config);
+    
+    // Sync with providers
+    const result = await syncProviders(validatedConfig, resolvedOptions);
+    
+    // Save updated configuration if needed
+    if (result.configUpdated) {
+      await writeConfigToFile(resolvedOptions.configPath || '', result.config);
+    }
+    
+    console.log(
+      '✨ Synchronization completed successfully',
+      result.configUpdated ? 'with updates' : 'without updates'
+    );
+    
+    return result;
+  } catch (error) {
+    console.error('❌ Synchronization failed:', error);
+    throw error;
   }
-
-  return { config, configUpdated };
 }
