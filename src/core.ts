@@ -40,7 +40,8 @@ export function loadEnvironment(options?: Partial<PaCOptions>): PaCOptions {
   
   return {
     configPath,
-    providers
+    providers,
+    writeBack: options?.writeBack ?? false
   };
 }
 
@@ -174,7 +175,7 @@ export async function pricesAsCode(options: Partial<PaCOptions> = {}): Promise<S
           if (issues.some(issue => 
             issue.code === 'invalid_union_discriminator' && 
             typeof issue.message === 'string' &&
-            issue.message.includes("Expected 'stripe'"))) {
+            issue.message.includes('Expected \'stripe\''))) {
             throw new Error(
               `Configuration validation failed: Your products and prices are missing the 'provider' field. ` +
               `Each product and price must have a 'provider' field set to 'stripe'. ` +

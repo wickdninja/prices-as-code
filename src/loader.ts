@@ -190,7 +190,7 @@ export function loadYamlConfig(configPath: string): Config {
         if (issues.some(issue => 
           issue.code === 'invalid_union_discriminator' && 
           typeof issue.message === 'string' &&
-          issue.message.includes("Expected 'stripe'"))) {
+          issue.message.includes('Expected \'stripe\''))) {
           
           const friendlyError = new Error(
             `Configuration validation failed: Your products and prices are missing the 'provider' field. ` +

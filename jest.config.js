@@ -10,6 +10,7 @@ export default {
     '^(\\.\\./.*|\\./.*)\\.(js|ts)$': '$1',
     '@jest/globals': '<rootDir>/node_modules/@jest/globals',
   },
+  modulePathIgnorePatterns: ['<rootDir>/lib/'],
   extensionsToTreatAsEsm: ['.ts'],
   collectCoverageFrom: [
     'src/**/*.ts',
