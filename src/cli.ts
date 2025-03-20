@@ -10,6 +10,7 @@ const helpArg = args.includes('--help') || args.includes('-h');
 const configPathArg = args.find(arg => !arg.startsWith('--'));
 const envFileArg = args.find(arg => arg.startsWith('--env='))?.split('=')[1];
 const stripeKeyArg = args.find(arg => arg.startsWith('--stripe-key='))?.split('=')[1];
+const writeBackArg = args.includes('--write-back');
 
 // Display help information
 function showHelp(): void {
@@ -28,6 +29,7 @@ function showHelp(): void {
     -h, --help       Show this help message
     --env=<path>     Path to .env file with environment variables
     --stripe-key=<key> Stripe API key (overrides env var)
+    --write-back     Write provider IDs back to your config file (default: off)
     --dry-run        Show changes without executing them
     --verbose        Show detailed logging information
 
@@ -81,7 +83,8 @@ async function main(): Promise<void> {
     
     const options = {
       configPath: resolvedConfigPath,
-      providers: providers.length > 0 ? providers : undefined
+      providers: providers.length > 0 ? providers : undefined,
+      writeBack: writeBackArg
     };
     
     // If env file specified, set it in Node env

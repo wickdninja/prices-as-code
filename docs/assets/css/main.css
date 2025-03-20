@@ -600,6 +600,26 @@ table th {
   background-color: var(--card-hover-bg);
 }
 
+/* Highlight card for new features */
+.highlight-card {
+  border-left: 4px solid var(--primary-color);
+  position: relative;
+  box-shadow: 0 5px 15px rgba(3, 102, 214, 0.1);
+}
+
+.highlight-card::after {
+  content: 'NEW';
+  position: absolute;
+  top: -10px;
+  right: 10px;
+  background-color: var(--primary-color);
+  color: white;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: bold;
+}
+
 .card-header {
   background-color: var(--light-bg);
   padding: 1.25rem 1.5rem;

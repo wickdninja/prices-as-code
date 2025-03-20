@@ -143,9 +143,12 @@ export async function pricesAsCode(options: Partial<PaCOptions> = {}): Promise<S
       // Sync with providers
       const result = await syncProviders(validatedConfig, resolvedOptions);
       
-      // Save updated configuration if needed
-      if (result.configUpdated) {
+      // Save updated configuration if needed and writeBack is enabled
+      if (result.configUpdated && resolvedOptions.writeBack) {
         await writeConfigToFile(resolvedOptions.configPath || '', result.config);
+        console.log('💾 Updated configuration written back to file');
+      } else if (result.configUpdated) {
+        console.log('ℹ️ Configuration has updates that were not written back to file (PUSH mode)');
       }
       
       console.log(

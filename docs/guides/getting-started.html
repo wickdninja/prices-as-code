@@ -209,6 +209,23 @@ prices:
                 <pre><code class="language-bash">npx prices-as-code prices.yml</code></pre>
             </div>
 
+            <h4>Push Model vs. Write-Back Model</h4>
+
+            <p>By default, Prices as Code uses a <strong>Push Model</strong>, where it pushes your configuration to the provider 
+            but doesn't modify your local configuration files. This is useful when:</p>
+
+            <ul>
+                <li>You want to use the same configuration file to push to different environments (dev, staging, production)</li>
+                <li>You're working with providers that don't allow setting IDs programmatically</li>
+                <li>You want to maintain a clean separation between your configuration and provider-specific IDs</li>
+            </ul>
+
+            <p>If you prefer the original behavior where provider IDs are written back to your configuration file, use the <code>--write-back</code> flag:</p>
+
+            <div class="highlight">
+                <pre><code class="language-bash">npx prices-as-code prices.yml --write-back</code></pre>
+            </div>
+
             <h3>Using the JavaScript API</h3>
 
             <p>You can also use the JavaScript API in your own scripts:</p>
@@ -227,7 +244,10 @@ async function syncPricing() {
             secretKey: process.env.STRIPE_SECRET_KEY,
           }
         }
-      ]
+      ],
+      // Set to true to write updated IDs back to config file (legacy behavior)
+      // Default is false - PUSH mode (push to provider without modifying source)
+      writeBack: false
     });
     
     console.log('Sync result:', result);

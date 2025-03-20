@@ -11,6 +11,7 @@ Define your product pricing schemas with type-safe definitions and synchronize t
 - **Type-Safe**: Use TypeScript and Zod schemas to define your pricing models with full type safety
 - **Declarative**: Define your products and prices in code, sync them to providers
 - **Idempotent**: Run it multiple times, only changes what's needed
+- **Push Model**: Push your config to different environments without ID conflicts
 - **Metadata Support**: Add custom metadata to your products and prices
 - **YAML or TypeScript**: Define your pricing in either YAML or TypeScript format
 - **Extensible**: Easily add support for your own billing providers
@@ -111,6 +112,7 @@ prices-as-code [configPath] [options]
 Options:
   --env=<path>          Path to .env file
   --stripe-key=<key>    Stripe API key
+  --write-back          Write provider IDs back to config file (legacy behavior)
 ```
 
 ## Supported Providers
@@ -143,6 +145,9 @@ async function syncPricing() {
           },
         },
       ],
+      // Set to true to write IDs back to config file (legacy behavior)
+      // Default is false (push mode - no writes to config file)
+      writeBack: false,
     });
 
     console.log("Sync result:", result);
@@ -185,6 +190,7 @@ Visit our [documentation website](https://wickdninja.github.io/prices-as-code) f
 ### Guides
 
 - [Getting Started](https://wickdninja.github.io/prices-as-code/guides/getting-started)
+- [Push Model](https://wickdninja.github.io/prices-as-code/guides/push-model) (New in v3.2.0)
 - [Configuration Format](https://wickdninja.github.io/prices-as-code/guides/configuration-file)
 - [Command Line Interface](https://wickdninja.github.io/prices-as-code/guides/cli)
 - [Custom Providers](https://wickdninja.github.io/prices-as-code/guides/custom-providers)

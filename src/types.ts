@@ -142,6 +142,7 @@ export type ProviderOptions = z.infer<typeof ProviderOptionsSchema>;
 export const PaCOptionsSchema = z.object({
   configPath: z.string().optional(),
   providers: z.array(ProviderOptionsSchema),
+  writeBack: z.boolean().optional().default(false),
 });
 export type PaCOptions = z.infer<typeof PaCOptionsSchema>;
 

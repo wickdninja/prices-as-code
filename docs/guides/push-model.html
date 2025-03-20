@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Push Model - Prices as Code</title>
+    <meta name="description" content="Learn about the Push Model in Prices as Code">
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="icon" href="https://raw.githubusercontent.com/wickdninja/assets/refs/heads/main/PaC.webp">
+</head>
+<body>
+    <header class="site-header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <a href="../index.html">
+                        <img src="https://raw.githubusercontent.com/wickdninja/assets/refs/heads/main/PaC.webp" alt="Prices as Code" width="40">
+                        <span>Prices as Code</span>
+                    </a>
+                </div>
+                <nav class="main-nav">
+                    <ul>
+                        <li><a href="index.html">Guides</a></li>
+                        <li><a href="../api/index.html">API</a></li>
+                        <li><a href="../providers/index.html">Providers</a></li>
+                        <li><a href="https://github.com/wickdninja/prices-as-code" target="_blank">GitHub</a></li>
+                        <li><a href="https://www.npmjs.com/package/prices-as-code" target="_blank">NPM</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main class="content">
+        <div class="container">
+            <h1>Push Model</h1>
+
+            <p>Prices as Code version 3.1.0+ introduces a new "Push Model" as the default behavior. This guide will explain what the Push Model is, why it's beneficial, and how to use it effectively.</p>
+
+            <h2>What is the Push Model?</h2>
+
+            <p>The Push Model refers to synchronization behavior where:</p>
+            
+            <ul>
+                <li>Your configuration is pushed to the provider (e.g., Stripe)</li>
+                <li>Provider-assigned IDs are not written back to your local configuration files</li>
+                <li>Your source configuration remains clean and provider-independent</li>
+            </ul>
+
+            <p>This is different from the previous default behavior (now called "Write-Back Model") where provider IDs would be written back to your configuration file after synchronization.</p>
+
+            <h2>Benefits of the Push Model</h2>
+
+            <h3>1. Multi-Environment Support</h3>
+
+            <p>The same configuration file can be used to push to different environments (development, staging, production) without ID conflicts. 
+            Each environment will have its own set of IDs maintained by the provider, but your configuration remains consistent.</p>
+
+            <div class="highlight">
+                <pre><code class="language-bash"># Push to development environment
+STRIPE_SECRET_KEY=sk_dev_... npx prices-as-code prices.yml
+
+# Push to production environment (same config file)
+STRIPE_SECRET_KEY=sk_prod_... npx prices-as-code prices.yml</code></pre>
+            </div>
+
+            <h3>2. Provider Limitations</h3>
+
+            <p>Many providers (like Stripe) don't allow setting IDs programmatically. 
+            The Push Model acknowledges this limitation and works with the provider's system rather than trying to maintain two sources of truth.</p>
+
+            <h3>3. Clean Configuration</h3>
+
+            <p>Your configuration files remain clean and focused on the business logic of your pricing structure, 
+            without being cluttered with provider-specific technical details like IDs that change between environments.</p>
+
+            <h3>4. CI/CD Friendly</h3>
+
+            <p>The Push Model works better with CI/CD pipelines, as each deployment can push the same configuration to a specific environment 
+            without needing to track environment-specific configuration files.</p>
+
+            <h2>Using the Push Model</h2>
+
+            <p>The Push Model is now the default behavior. Simply use Prices as Code as you normally would:</p>
+
+            <div class="highlight">
+                <pre><code class="language-bash">npx prices-as-code prices.yml</code></pre>
+            </div>
+
+            <h3>Using with JavaScript/TypeScript API</h3>
+
+            <div class="highlight">
+                <pre><code class="language-typescript">import { pac } from 'prices-as-code';
+
+async function syncPricing() {
+  const result = await pac({
+    configPath: './pricing.ts',
+    providers: [
+      {
+        provider: 'stripe',
+        options: {
+          secretKey: process.env.STRIPE_SECRET_KEY,
+        }
+      }
+    ],
+    // writeBack defaults to false (Push Model)
+  });
+  
+  console.log('Sync result:', result);
+}</code></pre>
+            </div>
+
+            <h2>Using the Legacy Write-Back Model</h2>
+
+            <p>If you prefer the previous behavior where IDs are written back to your configuration file, you can enable the "Write-Back Model":</p>
+
+            <h3>Using the CLI</h3>
+
+            <div class="highlight">
+                <pre><code class="language-bash">npx prices-as-code prices.yml --write-back</code></pre>
+            </div>
+
+            <h3>Using the JavaScript/TypeScript API</h3>
+
+            <div class="highlight">
+                <pre><code class="language-typescript">import { pac } from 'prices-as-code';
+
+const result = await pac({
+  configPath: './pricing.ts',
+  providers: [
+    {
+      provider: 'stripe',
+      options: {
+        secretKey: process.env.STRIPE_SECRET_KEY,
+      }
+    }
+  ],
+  writeBack: true  // Enable Write-Back Model
+});</code></pre>
+            </div>
+
+            <h2>Metadata for Provider References</h2>
+
+            <p>Even though provider IDs aren't written back to your configuration, you can still use the <code>metadata</code> field 
+            to store useful information that can help you reference specific products and prices:</p>
+
+            <div class="highlight">
+                <pre><code class="language-typescript">const config = {
+  products: [
+    {
+      provider: 'stripe',
+      name: 'Premium Plan',
+      metadata: {
+        key: 'premium',  // Use this for consistent references
+        displayOrder: 2
+      }
+    }
+  ],
+  prices: [
+    {
+      provider: 'stripe',
+      name: 'Premium Monthly',
+      unitAmount: 1999,
+      currency: 'usd',
+      type: 'recurring',
+      recurring: {
+        interval: 'month'
+      },
+      productKey: 'premium',  // Reference the product by key
+      metadata: {
+        planCode: 'premium_monthly'  // Use this for app logic
+      }
+    }
+  ]
+};</code></pre>
+            </div>
+
+            <p>This approach allows your application code to reference products and prices by their metadata 
+            rather than by provider-specific IDs, maintaining consistency across environments.</p>
+
+            <h2>Migration Guide</h2>
+
+            <p>If you're upgrading from a previous version and were relying on IDs being written back to your configuration:</p>
+
+            <ol>
+                <li>Update your application to use metadata keys instead of direct provider IDs where possible</li>
+                <li>Use the <code>--write-back</code> flag temporarily if needed during migration</li>
+                <li>Gradually adopt the Push Model pattern for better multi-environment support</li>
+            </ol>
+
+            <h2>Next Steps</h2>
+
+            <ul>
+                <li>Learn about <a href="metadata.html">Metadata Usage</a> for enhanced flexibility</li>
+                <li>Set up <a href="ci-cd.html">CI/CD Integration</a> with the Push Model</li>
+                <li>Explore <a href="custom-providers.html">Custom Providers</a> with the Push Model</li>
+            </ul>
+        </div>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container">
+            <div class="footer-content">
+                <p>Copyright &copy; 2025 Nate Ross. Distributed by an <a href="https://github.com/wickdninja/prices-as-code/blob/main/LICENSE">MIT license.</a></p>
+                <p><a href="#top" class="back-to-top">Back to top</a></p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../assets/js/main.js"></script>
+</body>
+</html>
