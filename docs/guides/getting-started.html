@@ -67,12 +67,15 @@ STRIPE_SECRET_KEY=sk_test_your_stripe_key</code></pre>
             </div>
 
             <h2>Create a Configuration File</h2>
-
-            <h3>TypeScript Configuration (Recommended)</h3>
-
-            <p>Create a <code>pricing.ts</code> file:</p>
-
-            <div class="highlight">
+            
+            <div class="tabs">
+                <div class="tab active" onclick="showTab('ts')">TypeScript</div>
+                <div class="tab" onclick="showTab('yaml')">YAML</div>
+            </div>
+            
+            <div id="ts-tab" class="tab-content">
+                <p>Create a <code>pricing.ts</code> file:</p>
+                <div class="highlight">
                 <pre><code class="language-typescript">import { Config } from 'prices-as-code';
 
 const config: Config = {
@@ -136,12 +139,11 @@ const config: Config = {
 
 export default config;</code></pre>
             </div>
-
-            <h3>YAML Configuration (Alternative)</h3>
-
-            <p>Creating a <code>prices.yml</code> file:</p>
-
-            <div class="highlight">
+            </div>
+            
+            <div id="yaml-tab" class="tab-content" style="display: none;">
+                <p>Create a <code>prices.yml</code> file:</p>
+                <div class="highlight">
                 <pre><code class="language-yaml">products:
   - provider: stripe
     name: Basic Plan
@@ -237,12 +239,117 @@ async function syncPricing() {
 syncPricing();</code></pre>
             </div>
 
+            <h2>Sample Configuration</h2>
+            
+            <div class="sample-config">
+                <h3>Real-World Example</h3>
+                <p>Here's a comprehensive example based on a tiered subscription model:</p>
+                
+                <div class="highlight">
+                <pre><code class="language-yaml">products:
+  - name: Free
+    description: Start your learning journey
+    metadata:
+      icon: Book
+      color: blue
+      key: free
+    features:
+      - Access to free content
+      - Limited features
+      - Core lessons
+      - Ad-supported experience
+    highlight: false
+    provider: stripe
+    key: free
+    
+  - name: Pro
+    description: Help us shine bright with new features
+    metadata:
+      icon: Star
+      color: purple
+      key: pro
+    features:
+      - Support ongoing development
+      - Supporter recognition
+      - Early access to new features
+      - Ad-free experience
+      - Unlimited access
+    highlight: true
+    provider: stripe
+    key: pro
+    
+  - name: Ultra
+    description: The ultimate experience
+    metadata:
+      icon: Trophy
+      color: amber
+      key: ultra
+    features:
+      - All Pro perks
+      - Ultra member recognition
+      - Input on future features
+      - Priority support
+      - Personalized plans
+    highlight: false
+    provider: stripe
+    key: ultra
+    
+prices:
+  - name: Free
+    unitAmount: 0
+    currency: usd
+    type: recurring
+    recurring:
+      interval: year
+      intervalCount: 1
+    active: true
+    metadata:
+      plan_code: free
+      display_price: $0
+    nickname: Free plan
+    provider: stripe
+    productKey: free
+    
+  - name: Pro Monthly
+    unitAmount: 1000
+    currency: usd
+    type: recurring
+    recurring:
+      interval: month
+      intervalCount: 1
+    active: true
+    metadata:
+      plan_code: pro_monthly
+      display_price: $10
+    nickname: Pro Monthly Plan
+    provider: stripe
+    productKey: pro
+    
+  - name: Pro Yearly
+    unitAmount: 9600
+    currency: usd
+    type: recurring
+    recurring:
+      interval: year
+      intervalCount: 1
+    active: true
+    metadata:
+      plan_code: pro_yearly
+      display_price: $96
+    nickname: Pro Yearly Plan
+    provider: stripe
+    productKey: pro
+</code></pre>
+                </div>
+            </div>
+            
             <h2>Next Steps</h2>
 
             <ul>
                 <li>Check out <a href="configuration-file.html">Configuration File Format</a> to learn more about config options</li>
                 <li>Set up <a href="ci-cd.html">CI/CD Integration</a> to automate your pricing updates</li>
                 <li>Learn about <a href="custom-pricing.html">Custom Pricing Logic</a> for more complex scenarios</li>
+                <li>Explore <a href="metadata.html">Metadata Usage</a> for enhanced flexibility</li>
             </ul>
         </div>
     </main>
@@ -257,5 +364,24 @@ syncPricing();</code></pre>
     </footer>
 
     <script src="../assets/js/main.js"></script>
+    <script>
+        function showTab(tabId) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.style.display = 'none';
+            });
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show the selected tab content
+            document.getElementById(tabId + '-tab').style.display = 'block';
+            
+            // Add active class to the clicked tab
+            document.querySelector(`.tab[onclick="showTab('${tabId}')"]`).classList.add('active');
+        }
+    </script>
 </body>
 </html>

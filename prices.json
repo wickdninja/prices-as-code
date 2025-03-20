@@ -1,0 +1,85 @@
+{
+  "products": [
+    {
+      "name": "Free",
+      "description": "Start your math learning journey",
+      "metadata": {
+        "icon": "Book",
+        "color": "blue",
+        "key": "free"
+      },
+      "features": [
+        "Access to free games",
+        "Limited worksheets",
+        "Core lesson content",
+        "Ad-supported experience"
+      ],
+      "highlight": false,
+      "provider": "stripe",
+      "key": "free",
+      "id": "prod_RyYY6Dw9Rext5U"
+    },
+    {
+      "name": "Pro",
+      "description": "Help us shine bright with new games and features",
+      "metadata": {
+        "icon": "Star",
+        "color": "purple",
+        "key": "pro"
+      },
+      "features": [
+        "Support ongoing development",
+        "Supporter recognition",
+        "Early access to new games",
+        "Ad-free experience",
+        "Unlimited worksheets"
+      ],
+      "highlight": true,
+      "provider": "stripe",
+      "key": "pro",
+      "id": "prod_RyYY6dmlsnbd7o"
+    }
+  ],
+  "prices": [
+    {
+      "name": "Free",
+      "unitAmount": 0,
+      "currency": "usd",
+      "type": "recurring",
+      "recurring": {
+        "interval": "year",
+        "intervalCount": 1
+      },
+      "active": true,
+      "metadata": {
+        "plan_code": "free",
+        "display_price": "$0"
+      },
+      "nickname": "Free plan",
+      "provider": "stripe",
+      "productKey": "free",
+      "id": "price_1R4bfBGfv0HRCThbsE1tdHeP",
+      "key": "free_1742448545682"
+    },
+    {
+      "name": "Pro Monthly",
+      "unitAmount": 1000,
+      "currency": "usd",
+      "type": "recurring",
+      "recurring": {
+        "interval": "month",
+        "intervalCount": 1
+      },
+      "active": true,
+      "metadata": {
+        "plan_code": "pro_monthly",
+        "display_price": "$10"
+      },
+      "nickname": "Pro Monthly Plan",
+      "provider": "stripe",
+      "productKey": "pro",
+      "id": "price_1R4bfCGfv0HRCThbeSJaWIsM",
+      "key": "pro_monthly_1742448545921"
+    }
+  ]
+}

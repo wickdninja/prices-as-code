@@ -416,6 +416,81 @@ table th {
   box-shadow: 0 6px 16px rgba(108, 117, 125, 0.25);
 }
 
+.btn-small {
+    font-size: 14px;
+    padding: 5px 10px;
+    margin-top: 10px;
+    display: inline-block;
+}
+
+.badge {
+    background-color: #4caf50;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 14px;
+    margin-left: 10px;
+    display: inline-block;
+}
+
+.whats-new {
+    background-color: #f8f9fa;
+    border-left: 4px solid #4caf50;
+    padding: 15px 20px;
+    margin: 20px 0;
+    border-radius: 4px;
+}
+
+.whats-new h2 {
+    margin-top: 0;
+    font-size: 1.4em;
+    color: #2c3e50;
+}
+
+.whats-new ul {
+    padding-left: 20px;
+}
+
+.sample-config {
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    padding: 20px;
+    border-radius: 4px;
+    margin: 20px 0;
+}
+
+.sample-config h3 {
+    margin-top: 0;
+    font-size: 1.3em;
+    color: #2c3e50;
+}
+
+.tabs {
+    display: flex;
+    border-bottom: 1px solid #dee2e6;
+    margin-bottom: 15px;
+}
+
+.tab {
+    padding: 10px 15px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    border-radius: 4px 4px 0 0;
+    margin-bottom: -1px;
+}
+
+.tab.active {
+    background-color: #fff;
+    border-color: #dee2e6 #dee2e6 #fff;
+    color: #495057;
+    font-weight: bold;
+}
+
+.tab:hover:not(.active) {
+    border-color: #e9ecef #e9ecef #dee2e6;
+    background-color: #f8f9fa;
+}
+
 /* Features */
 .features {
   display: grid;
