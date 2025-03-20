@@ -1,0 +1,239 @@
+products:
+  - name: Free
+    description: Start your math learning journey
+    metadata:
+      icon: Book
+      color: blue
+      key: free
+    features:
+      - Access to free games
+      - Limited worksheets
+      - Core lesson content
+      - Ad-supported experience
+    highlight: false
+    provider: stripe
+    key: free
+    id: prod_RyXfAGFaVAoqjW
+  - name: Pro
+    description: Help us shine bright with new games and features
+    metadata:
+      icon: Star
+      color: purple
+      key: pro
+    features:
+      - Support ongoing development
+      - Supporter recognition
+      - Early access to new games
+      - Ad-free experience
+      - Unlimited worksheets
+    highlight: true
+    provider: stripe
+    key: pro
+    id: prod_RyXfadnYew8Eo1
+  - name: Ultra
+    description: The ultimate math learning experience
+    metadata:
+      icon: Trophy
+      color: amber
+      key: ultra
+    features:
+      - All Pro perks
+      - Ultra member recognition
+      - Input on future features
+      - Priority support
+      - Personalized math plans
+    highlight: false
+    provider: stripe
+    key: ultra
+    id: prod_RyXfAkpMcchegJ
+  - name: Donations
+    description: One-time donations to support KidMath
+    metadata:
+      icon: Heart
+      color: red
+      key: donations
+    features:
+      - Support ongoing development
+      - Donor recognition
+      - Varying levels of rewards
+    highlight: false
+    provider: stripe
+    key: donations
+    id: prod_RyXfGgQAGHO0dM
+prices:
+  - name: Free
+    unitAmount: 0
+    currency: usd
+    type: recurring
+    recurring:
+      interval: year
+      intervalCount: 1
+    active: true
+    metadata:
+      plan_code: free
+      display_price: $0
+    nickname: Free plan
+    provider: stripe
+    productKey: free
+    id: price_1R4aaXGh1es54lnIgysaCvsa
+    key: free_1742444413093
+  - name: Pro Monthly
+    unitAmount: 1000
+    currency: usd
+    type: recurring
+    recurring:
+      interval: month
+      intervalCount: 1
+    active: true
+    metadata:
+      plan_code: pro_monthly
+      display_price: $10
+    nickname: Pro Monthly Plan
+    provider: stripe
+    productKey: pro
+    id: price_1R4aaXGh1es54lnIFssxsjGJ
+    key: pro_monthly_1742444413387
+  - name: Pro Yearly
+    unitAmount: 9600
+    currency: usd
+    type: recurring
+    recurring:
+      interval: year
+      intervalCount: 1
+    active: true
+    metadata:
+      plan_code: pro_yearly
+      display_price: $96
+    nickname: Pro Yearly Plan
+    provider: stripe
+    productKey: pro
+    id: price_1R4aaXGh1es54lnIM0nFcDrn
+    key: pro_yearly_1742444413775
+  - name: Ultra Monthly
+    unitAmount: 2500
+    currency: usd
+    type: recurring
+    recurring:
+      interval: month
+      intervalCount: 1
+    active: true
+    metadata:
+      plan_code: ultra_monthly
+      display_price: $25
+    nickname: Ultra Monthly Plan
+    provider: stripe
+    productKey: ultra
+    id: price_1R4aaYGh1es54lnICgAc0wEV
+    key: ultra_monthly_1742444414068
+  - name: Ultra Yearly
+    unitAmount: 24000
+    currency: usd
+    type: recurring
+    recurring:
+      interval: year
+      intervalCount: 1
+    active: true
+    metadata:
+      plan_code: ultra_yearly
+      display_price: $240
+    nickname: Ultra Yearly Plan
+    provider: stripe
+    productKey: ultra
+    id: price_1R4aaYGh1es54lnI7cantgeO
+    key: ultra_yearly_1742444414388
+  - name: Supporter
+    unitAmount: 300
+    currency: usd
+    type: one_time
+    active: true
+    metadata:
+      plan_code: donation_3
+      display_price: $3
+      donation_level: basic
+      syncError: >-
+        unknown_type/unknown_code: Could not find Stripe product ID for key:
+        donation. Ensure products are synced before prices.
+      syncFailed: 'true'
+    nickname: Supporter Donation
+    provider: stripe
+    productKey: donation
+  - name: Friend
+    unitAmount: 500
+    currency: usd
+    type: one_time
+    active: true
+    metadata:
+      plan_code: donation_5
+      display_price: $5
+      donation_level: basic
+      syncError: >-
+        unknown_type/unknown_code: Could not find Stripe product ID for key:
+        donation. Ensure products are synced before prices.
+      syncFailed: 'true'
+    nickname: Friend Donation
+    provider: stripe
+    productKey: donation
+  - name: Pro
+    unitAmount: 1000
+    currency: usd
+    type: one_time
+    active: true
+    metadata:
+      plan_code: donation_10
+      display_price: $10
+      donation_level: pro
+      syncError: >-
+        unknown_type/unknown_code: Could not find Stripe product ID for key:
+        donation. Ensure products are synced before prices.
+      syncFailed: 'true'
+    nickname: Pro Donation
+    provider: stripe
+    productKey: donation
+  - name: Ultra
+    unitAmount: 2500
+    currency: usd
+    type: one_time
+    active: true
+    metadata:
+      plan_code: donation_25
+      display_price: $25
+      donation_level: ultra
+      syncError: >-
+        unknown_type/unknown_code: Could not find Stripe product ID for key:
+        donation. Ensure products are synced before prices.
+      syncFailed: 'true'
+    nickname: Ultra Donation
+    provider: stripe
+    productKey: donation
+  - name: VIP
+    unitAmount: 10000
+    currency: usd
+    type: one_time
+    active: true
+    metadata:
+      plan_code: donation_100
+      display_price: $100
+      donation_level: vip
+      syncError: >-
+        unknown_type/unknown_code: Could not find Stripe product ID for key:
+        donation. Ensure products are synced before prices.
+      syncFailed: 'true'
+    nickname: VIP Donor
+    provider: stripe
+    productKey: donation
+  - name: Elite
+    unitAmount: 100000
+    currency: usd
+    type: one_time
+    active: true
+    metadata:
+      plan_code: donation_1000
+      display_price: $1000
+      donation_level: elite
+      syncError: >-
+        unknown_type/unknown_code: Could not find Stripe product ID for key:
+        donation. Ensure products are synced before prices.
+      syncFailed: 'true'
+    nickname: Elite Donor
+    provider: stripe
+    productKey: donation
