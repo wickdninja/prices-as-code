@@ -38,6 +38,15 @@
 
             <p>The Prices as Code configuration file is where you define your products and pricing structures. This guide explains the configuration format in detail and provides examples for both TypeScript and YAML formats.</p>
 
+            <div class="whats-new">
+                <h2>Version 3.0.0 Updates</h2>
+                <ul>
+                    <li><strong>Simplified Provider Support:</strong> Now focuses exclusively on Stripe integration</li>
+                    <li><strong>Enhanced Sample Configurations:</strong> More comprehensive example files included</li>
+                    <li><strong>Improved Type Safety:</strong> Better TypeScript type definitions and validation</li>
+                </ul>
+            </div>
+
             <h2>File Formats</h2>
 
             <p>Prices as Code supports both TypeScript/JavaScript and YAML configuration files:</p>
@@ -48,10 +57,15 @@
 
             <h2>Configuration Structure</h2>
 
-            <p>Every configuration file has two main sections:</p>
-
-            <div class="highlight">
-                <pre><code class="language-typescript">// TypeScript example
+            <div class="tabs">
+                <div class="tab active" onclick="showTab('ts')">TypeScript</div>
+                <div class="tab" onclick="showTab('yaml')">YAML</div>
+            </div>
+            
+            <div id="ts-tab" class="tab-content">
+                <p>Every configuration file has two main sections: <code>products</code> and <code>prices</code>:</p>
+                <div class="highlight">
+                    <pre><code class="language-typescript">// TypeScript example
 import { Config } from 'prices-as-code';
 
 const config: Config = {
@@ -64,6 +78,21 @@ const config: Config = {
 };
 
 export default config;</code></pre>
+                </div>
+            </div>
+            
+            <div id="yaml-tab" class="tab-content" style="display: none;">
+                <p>Every configuration file has two main sections: <code>products</code> and <code>prices</code>:</p>
+                <div class="highlight">
+                    <pre><code class="language-yaml"># YAML example
+products:
+  - # First product definition
+  - # Second product definition
+
+prices:
+  - # First price definition
+  - # Second price definition</code></pre>
+                </div>
             </div>
 
             <h2>Products Configuration</h2>
@@ -85,7 +114,7 @@ export default config;</code></pre>
                             <td><code>provider</code></td>
                             <td>string</td>
                             <td>Yes</td>
-                            <td>The payment provider (e.g., 'stripe', 'recurly')</td>
+                            <td>The payment provider (e.g., 'stripe')</td>
                         </tr>
                         <tr>
                             <td><code>name</code></td>
@@ -117,14 +146,32 @@ export default config;</code></pre>
                             <td>No</td>
                             <td>Custom metadata for the product</td>
                         </tr>
+                        <tr>
+                            <td><code>key</code></td>
+                            <td>string</td>
+                            <td>No</td>
+                            <td>Unique identifier for referencing this product (auto-generated if not provided)</td>
+                        </tr>
+                        <tr>
+                            <td><code>id</code></td>
+                            <td>string</td>
+                            <td>No</td>
+                            <td>Provider-specific ID (populated after syncing)</td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
 
             <h3>Product Example</h3>
 
-            <div class="highlight">
-                <pre><code class="language-typescript">// TypeScript example
+            <div class="tabs">
+                <div class="tab active" onclick="showTab('product-ts')">TypeScript</div>
+                <div class="tab" onclick="showTab('product-yaml')">YAML</div>
+            </div>
+            
+            <div id="product-ts-tab" class="tab-content">
+                <div class="highlight">
+                    <pre><code class="language-typescript">// TypeScript example
 {
   provider: "stripe",
   name: "Pro Plan",
@@ -137,13 +184,18 @@ export default config;</code></pre>
   ],
   highlight: true,
   metadata: {
+    icon: "Star",
+    color: "purple",
     displayOrder: 2,
-  }
+  },
+  key: "pro"
 }</code></pre>
+                </div>
             </div>
-
-            <div class="highlight">
-                <pre><code class="language-yaml"># YAML example
+            
+            <div id="product-yaml-tab" class="tab-content" style="display: none;">
+                <div class="highlight">
+                    <pre><code class="language-yaml"># YAML example
 - provider: stripe
   name: Pro Plan
   description: For growing businesses
@@ -154,7 +206,11 @@ export default config;</code></pre>
     - Advanced analytics
   highlight: true
   metadata:
-    displayOrder: 2</code></pre>
+    icon: Star
+    color: purple
+    displayOrder: 2
+  key: pro</code></pre>
+                </div>
             </div>
 
             <h2>Prices Configuration</h2>
@@ -176,7 +232,7 @@ export default config;</code></pre>
                             <td><code>provider</code></td>
                             <td>string</td>
                             <td>Yes</td>
-                            <td>The payment provider (e.g., 'stripe', 'recurly')</td>
+                            <td>The payment provider (e.g., 'stripe')</td>
                         </tr>
                         <tr>
                             <td><code>name</code></td>
@@ -226,6 +282,24 @@ export default config;</code></pre>
                             <td>No</td>
                             <td>Custom metadata for the price</td>
                         </tr>
+                        <tr>
+                            <td><code>key</code></td>
+                            <td>string</td>
+                            <td>No</td>
+                            <td>Unique identifier for this price (auto-generated if not provided)</td>
+                        </tr>
+                        <tr>
+                            <td><code>id</code></td>
+                            <td>string</td>
+                            <td>No</td>
+                            <td>Provider-specific ID (populated after syncing)</td>
+                        </tr>
+                        <tr>
+                            <td><code>active</code></td>
+                            <td>boolean</td>
+                            <td>No</td>
+                            <td>Whether the price is active (default: true)</td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -252,8 +326,8 @@ export default config;</code></pre>
                         <tr>
                             <td><code>intervalCount</code></td>
                             <td>number</td>
-                            <td>Yes</td>
-                            <td>Number of intervals between billings</td>
+                            <td>No</td>
+                            <td>Number of intervals between billings (default: 1)</td>
                         </tr>
                     </tbody>
                 </table>
@@ -261,29 +335,38 @@ export default config;</code></pre>
 
             <h3>Price Example</h3>
 
-            <div class="highlight">
-                <pre><code class="language-typescript">// TypeScript example
+            <div class="tabs">
+                <div class="tab active" onclick="showTab('price-ts')">TypeScript</div>
+                <div class="tab" onclick="showTab('price-yaml')">YAML</div>
+            </div>
+            
+            <div id="price-ts-tab" class="tab-content">
+                <div class="highlight">
+                    <pre><code class="language-typescript">// TypeScript example
 {
   provider: "stripe",
   name: "Pro Monthly",
   nickname: "Pro Monthly",
-  unitAmount: 1999,
+  unitAmount: 1999, // $19.99
   currency: "usd",
   type: "recurring",
   recurring: {
     interval: "month",
     intervalCount: 1,
   },
-  productKey: "pro_plan",
+  productKey: "pro",
   metadata: {
-    displayName: "Pro Monthly",
-    popular: false,
-  }
+    plan_code: "pro_monthly",
+    display_price: "$19.99",
+  },
+  active: true
 }</code></pre>
+                </div>
             </div>
-
-            <div class="highlight">
-                <pre><code class="language-yaml"># YAML example
+            
+            <div id="price-yaml-tab" class="tab-content" style="display: none;">
+                <div class="highlight">
+                    <pre><code class="language-yaml"># YAML example
 - provider: stripe
   name: Pro Monthly
   nickname: Pro Monthly
@@ -293,101 +376,138 @@ export default config;</code></pre>
   recurring:
     interval: month
     intervalCount: 1
-  productKey: pro_plan
+  productKey: pro
   metadata:
-    displayName: Pro Monthly
-    popular: false</code></pre>
+    plan_code: pro_monthly
+    display_price: "$19.99"
+  active: true</code></pre>
+                </div>
             </div>
 
             <h2>Key Generation and Mapping</h2>
 
-            <p>Prices as Code automatically generates keys for products based on their names, converting them to snake_case format. For example, "Pro Plan" becomes "pro_plan". These keys are used to link prices to their associated products.</p>
+            <p>Prices as Code automatically generates keys for products and prices if they're not explicitly provided:</p>
+            <ul>
+                <li>For <strong>products</strong>, a key is typically derived from the product name (e.g., "Pro Plan" becomes "pro")</li>
+                <li>For <strong>prices</strong>, keys are auto-generated based on the price name and a timestamp</li>
+                <li>The <code>productKey</code> in prices refers to the <code>key</code> of a product, forming a relationship between them</li>
+            </ul>
 
             <h2>Metadata</h2>
 
             <p>Both products and prices support a <code>metadata</code> field for adding custom attributes. This is useful for:</p>
             <ul>
-                <li>UI display preferences (order, highlighting, etc.)</li>
+                <li>UI display preferences (order, highlighting, icons, colors, etc.)</li>
                 <li>Feature flags</li>
                 <li>Integration with other systems</li>
                 <li>Any other custom data you need to associate with products or prices</li>
             </ul>
 
-            <h2>Full Configuration Example</h2>
+            <div class="note">
+                <p>Metadata is highly flexible and can contain any valid JSON data. Stripe limits metadata to strings, so PaC will convert non-string values automatically when syncing with Stripe.</p>
+            </div>
 
-            <p>Here's a complete example showing both products and prices:</p>
-
-            <div class="highlight">
-                <pre><code class="language-typescript">import { Config } from 'prices-as-code';
-
-const config: Config = {
-  products: [
-    {
-      provider: "stripe",
-      name: "Basic Plan",
-      description: "For individuals and small teams",
-      features: ["5 projects", "10GB storage", "Email support"],
-      highlight: false,
-      metadata: {
-        displayOrder: 1,
-      },
-    },
-    {
-      provider: "stripe",
-      name: "Pro Plan",
-      description: "For growing businesses",
-      features: [
-        "Unlimited projects",
-        "100GB storage",
-        "Priority support",
-        "Advanced analytics",
-      ],
-      highlight: true,
-      metadata: {
-        displayOrder: 2,
-      },
-    },
-  ],
-
-  prices: [
-    {
-      provider: "stripe",
-      name: "Basic Monthly",
-      nickname: "Basic Monthly",
-      unitAmount: 999,
-      currency: "usd",
-      type: "recurring",
-      recurring: {
-        interval: "month",
-        intervalCount: 1,
-      },
-      productKey: "basic_plan",
-      metadata: {
-        displayName: "Basic Monthly",
-        popular: false,
-      },
-    },
-    {
-      provider: "stripe",
-      name: "Pro Monthly",
-      nickname: "Pro Monthly",
-      unitAmount: 1999,
-      currency: "usd",
-      type: "recurring",
-      recurring: {
-        interval: "month",
-        intervalCount: 1,
-      },
-      productKey: "pro_plan",
-      metadata: {
-        displayName: "Pro Monthly",
-        popular: false,
-      },
-    },
-  ],
-};
-
-export default config;</code></pre>
+            <h2>Sample Configuration</h2>
+            
+            <div class="sample-config">
+                <h3>Real-World Example</h3>
+                <p>Here's a comprehensive example based on a tiered subscription model:</p>
+                
+                <div class="highlight">
+                <pre><code class="language-yaml">products:
+  - name: Free
+    description: Start your learning journey
+    metadata:
+      icon: Book
+      color: blue
+      key: free
+    features:
+      - Access to free content
+      - Limited features
+      - Core lessons
+      - Ad-supported experience
+    highlight: false
+    provider: stripe
+    key: free
+    
+  - name: Pro
+    description: Help us shine bright with new features
+    metadata:
+      icon: Star
+      color: purple
+      key: pro
+    features:
+      - Support ongoing development
+      - Supporter recognition
+      - Early access to new features
+      - Ad-free experience
+      - Unlimited access
+    highlight: true
+    provider: stripe
+    key: pro
+    
+  - name: Ultra
+    description: The ultimate experience
+    metadata:
+      icon: Trophy
+      color: amber
+      key: ultra
+    features:
+      - All Pro perks
+      - Ultra member recognition
+      - Input on future features
+      - Priority support
+      - Personalized plans
+    highlight: false
+    provider: stripe
+    key: ultra
+    
+prices:
+  - name: Free
+    unitAmount: 0
+    currency: usd
+    type: recurring
+    recurring:
+      interval: year
+      intervalCount: 1
+    active: true
+    metadata:
+      plan_code: free
+      display_price: $0
+    nickname: Free plan
+    provider: stripe
+    productKey: free
+    
+  - name: Pro Monthly
+    unitAmount: 1000
+    currency: usd
+    type: recurring
+    recurring:
+      interval: month
+      intervalCount: 1
+    active: true
+    metadata:
+      plan_code: pro_monthly
+      display_price: $10
+    nickname: Pro Monthly Plan
+    provider: stripe
+    productKey: pro
+    
+  - name: Pro Yearly
+    unitAmount: 9600
+    currency: usd
+    type: recurring
+    recurring:
+      interval: year
+      intervalCount: 1
+    active: true
+    metadata:
+      plan_code: pro_yearly
+      display_price: $96
+    nickname: Pro Yearly Plan
+    provider: stripe
+    productKey: pro</code></pre>
+                </div>
             </div>
 
             <h2>Next Steps</h2>
@@ -396,6 +516,7 @@ export default config;</code></pre>
                 <li>Learn how to use the <a href="cli.html">Command-Line Interface</a></li>
                 <li>Set up <a href="ci-cd.html">CI/CD Integration</a> for automated pricing updates</li>
                 <li>Explore <a href="metadata.html">Working with Metadata</a> for enhanced flexibility</li>
+                <li>Understand how to implement <a href="custom-providers.html">Custom Providers</a> beyond Stripe</li>
             </ul>
         </div>
     </main>
@@ -410,5 +531,35 @@ export default config;</code></pre>
     </footer>
 
     <script src="../assets/js/main.js"></script>
+    <script>
+        function showTab(tabId) {
+            // Find the tab section containing this tab
+            const tabContent = document.getElementById(tabId + '-tab');
+            if (!tabContent) return;
+            
+            // Find the parent content area that holds these tabs
+            const tabSection = tabContent.parentElement;
+            
+            // Hide all tab contents in this section
+            const tabContents = tabSection.querySelectorAll('.tab-content');
+            tabContents.forEach(tab => {
+                tab.style.display = 'none';
+            });
+            
+            // Show the selected tab content
+            tabContent.style.display = 'block';
+            
+            // Update active tab styling
+            // Find the tab nav that is in the same section
+            const tabs = tabSection.querySelectorAll('.tab');
+            tabs.forEach(tab => {
+                if (tab.getAttribute('onclick').includes(tabId)) {
+                    tab.classList.add('active');
+                } else {
+                    tab.classList.remove('active');
+                }
+            });
+        }
+    </script>
 </body>
 </html>
