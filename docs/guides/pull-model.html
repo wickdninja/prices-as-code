@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pull Model - Prices as Code</title>
+    <meta name="description" content="Learn about the Pull Model in Prices as Code">
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="icon" href="https://raw.githubusercontent.com/wickdninja/assets/refs/heads/main/PaC.webp">
+</head>
+<body>
+    <header class="site-header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <a href="../index.html">
+                        <img src="https://raw.githubusercontent.com/wickdninja/assets/refs/heads/main/PaC.webp" alt="Prices as Code" width="40">
+                        <span>Prices as Code</span>
+                    </a>
+                </div>
+                <nav class="main-nav">
+                    <ul>
+                        <li><a href="index.html">Guides</a></li>
+                        <li><a href="../api/index.html">API</a></li>
+                        <li><a href="../providers/index.html">Providers</a></li>
+                        <li><a href="https://github.com/wickdninja/prices-as-code" target="_blank">GitHub</a></li>
+                        <li><a href="https://www.npmjs.com/package/prices-as-code" target="_blank">NPM</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main class="content">
+        <div class="container">
+            <h1>Pull Model</h1>
+
+            <p>Prices as Code version 3.3.0 introduces a new "Pull Model" that complements the existing Push Model. This guide explains what the Pull Model is, why it's valuable, and how to use it to import existing pricing from providers into your codebase.</p>
+
+            <h2>What is the Pull Model?</h2>
+
+            <p>The Pull Model refers to the ability to:</p>
+            
+            <ul>
+                <li>Extract product and pricing information from your provider (e.g., Stripe)</li>
+                <li>Convert this information into a local configuration file (YAML, JSON, or TypeScript)</li>
+                <li>Create a starting point for managing your existing pricing using Prices as Code</li>
+            </ul>
+
+            <p>This is the opposite of the Push Model, where your local configuration is pushed to providers. With the Pull Model, your provider's data is the source of truth that initializes your local configuration.</p>
+
+            <h2>Benefits of the Pull Model</h2>
+
+            <h3>1. Onboard Existing Customers</h3>
+
+            <p>If you already have pricing configured in providers like Stripe, you can pull that configuration
+            into your codebase without having to recreate it manually. This is especially helpful when
+            adopting Prices as Code for an existing product with established pricing.</p>
+
+            <h3>2. Configuration Backup</h3>
+
+            <p>Create point-in-time backups of your pricing configuration, which can be useful for
+            auditing, recovery, or comparison purposes.</p>
+
+            <h3>3. Multi-Environment Migration</h3>
+
+            <p>Pull configuration from one environment (e.g., production), modify it as needed, 
+            and push it to another environment (e.g., staging or development).</p>
+
+            <h3>4. Understanding Provider Data</h3>
+
+            <p>See exactly how your provider stores your pricing data and how Prices as Code maps
+            between your configuration and the provider's API.</p>
+
+            <h2>Using the Pull Model</h2>
+
+            <h3>Using the CLI</h3>
+
+            <p>Use the <code>pull</code> command with the CLI to generate a configuration file:</p>
+
+            <div class="highlight">
+                <pre><code class="language-bash"># Pull pricing data into a YAML file (default format)
+npx prices-as-code pull pricing.yml
+
+# Pull pricing data into a TypeScript file
+npx prices-as-code pull --format=ts pricing.ts
+
+# Pull pricing data into a JSON file
+npx prices-as-code pull --format=json pricing.json</code></pre>
+            </div>
+
+            <h3>Using the JavaScript/TypeScript API</h3>
+
+            <div class="highlight">
+                <pre><code class="language-typescript">import { pac } from 'prices-as-code';
+
+async function pullPricing() {
+  try {
+    const result = await pac.pull({
+      configPath: './pricing.yml', // Output file path
+      providers: [
+        {
+          provider: 'stripe',
+          options: {
+            secretKey: process.env.STRIPE_SECRET_KEY,
+          }
+        }
+      ],
+      format: 'yaml', // 'yaml', 'json', or 'ts'
+    });
+    
+    console.log('Pull complete:', result);
+  } catch (error) {
+    console.error('Pull failed:', error);
+  }
+}</code></pre>
+            </div>
+
+            <h2>Configuration Format Options</h2>
+
+            <p>The Pull Model supports three output formats:</p>
+
+            <h3>YAML (Default)</h3>
+
+            <p>YAML provides a clean, readable format that's easy to edit manually:</p>
+
+            <div class="highlight">
+                <pre><code class="language-yaml">products:
+  - provider: stripe
+    name: Premium Plan
+    id: prod_xxxxxxxx
+    description: Our best value option
+    key: premium_plan
+    features:
+      - Unlimited projects
+      - Priority support
+      - Custom reporting
+    highlight: true
+    metadata:
+      displayOrder: 2
+      stripeCreated: '1712345678'
+
+prices:
+  - provider: stripe
+    name: Premium Monthly
+    id: price_xxxxxxxx
+    nickname: Premium Monthly
+    unitAmount: 1999
+    currency: USD
+    type: recurring
+    recurring:
+      interval: month
+      intervalCount: 1
+    productId: prod_xxxxxxxx
+    productKey: premium_plan
+    key: premium_monthly
+    metadata:
+      original_name: Premium Monthly
+      stripeCreated: '1712345679'</code></pre>
+            </div>
+
+            <h3>TypeScript</h3>
+
+            <p>TypeScript provides strong typing and integrated support in your codebase:</p>
+
+            <div class="highlight">
+                <pre><code class="language-typescript">/**
+ * This file is auto-generated by prices-as-code.
+ * Manual changes may be overwritten.
+ */
+import { Config } from 'prices-as-code';
+
+export const config: Config = {
+  products: [
+    {
+      provider: "stripe",
+      name: "Premium Plan",
+      id: "prod_xxxxxxxx",
+      description: "Our best value option",
+      key: "premium_plan",
+      features: [
+        "Unlimited projects",
+        "Priority support",
+        "Custom reporting"
+      ],
+      highlight: true,
+      metadata: {
+        displayOrder: 2,
+        stripeCreated: "1712345678"
+      }
+    }
+  ],
+  prices: [
+    {
+      provider: "stripe",
+      name: "Premium Monthly",
+      id: "price_xxxxxxxx",
+      nickname: "Premium Monthly",
+      unitAmount: 1999,
+      currency: "USD",
+      type: "recurring",
+      recurring: {
+        interval: "month",
+        intervalCount: 1
+      },
+      productId: "prod_xxxxxxxx",
+      productKey: "premium_plan",
+      key: "premium_monthly",
+      metadata: {
+        original_name: "Premium Monthly",
+        stripeCreated: "1712345679"
+      }
+    }
+  ]
+};
+
+export default config;</code></pre>
+            </div>
+
+            <h3>JSON</h3>
+
+            <p>JSON provides a format that's easy to parse and work with programmatically:</p>
+
+            <div class="highlight">
+                <pre><code class="language-json">{
+  "products": [
+    {
+      "provider": "stripe",
+      "name": "Premium Plan",
+      "id": "prod_xxxxxxxx",
+      "description": "Our best value option",
+      "key": "premium_plan",
+      "features": [
+        "Unlimited projects",
+        "Priority support",
+        "Custom reporting"
+      ],
+      "highlight": true,
+      "metadata": {
+        "displayOrder": 2,
+        "stripeCreated": "1712345678"
+      }
+    }
+  ],
+  "prices": [
+    {
+      "provider": "stripe",
+      "name": "Premium Monthly",
+      "id": "price_xxxxxxxx",
+      "nickname": "Premium Monthly",
+      "unitAmount": 1999,
+      "currency": "USD",
+      "type": "recurring",
+      "recurring": {
+        "interval": "month",
+        "intervalCount": 1
+      },
+      "productId": "prod_xxxxxxxx",
+      "productKey": "premium_plan",
+      "key": "premium_monthly",
+      "metadata": {
+        "original_name": "Premium Monthly",
+        "stripeCreated": "1712345679"
+      }
+    }
+  ]
+}</code></pre>
+            </div>
+
+            <h2>Workflow Patterns</h2>
+
+            <h3>Initial Pull and Subsequent Push</h3>
+
+            <p>A common workflow involves:</p>
+            
+            <ol>
+                <li>Pulling your existing pricing configuration from Stripe (once)</li>
+                <li>Making adjustments to the generated configuration file</li>
+                <li>Using the Push Model to maintain your pricing going forward</li>
+            </ol>
+
+            <div class="highlight">
+                <pre><code class="language-bash"># One-time pull of existing data
+npx prices-as-code pull pricing.yml
+
+# Edit pricing.yml as needed...
+
+# From now on, use the push model
+npx prices-as-code pricing.yml</code></pre>
+            </div>
+
+            <h3>Environment Migration</h3>
+
+            <p>For migrating between environments:</p>
+
+            <div class="highlight">
+                <pre><code class="language-bash"># Pull from production
+STRIPE_SECRET_KEY=sk_prod_... npx prices-as-code pull pricing.yml
+
+# Make necessary adjustments for staging...
+
+# Push to staging
+STRIPE_SECRET_KEY=sk_staging_... npx prices-as-code pricing.yml</code></pre>
+            </div>
+
+            <h2>Next Steps</h2>
+
+            <ul>
+                <li>Learn about the <a href="push-model.html">Push Model</a> for ongoing pricing management</li>
+                <li>Understand <a href="metadata.html">Metadata Usage</a> for enhanced flexibility</li>
+                <li>Set up <a href="ci-cd.html">CI/CD Integration</a> for automated pricing updates</li>
+                <li>Explore <a href="custom-providers.html">Custom Providers</a> for other payment systems</li>
+            </ul>
+        </div>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container">
+            <div class="footer-content">
+                <p>Copyright &copy; 2025 Nate Ross. Distributed by an <a href="https://github.com/wickdninja/prices-as-code/blob/main/LICENSE">MIT license.</a></p>
+                <p><a href="#top" class="back-to-top">Back to top</a></p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../assets/js/main.js"></script>
+</body>
+</html>

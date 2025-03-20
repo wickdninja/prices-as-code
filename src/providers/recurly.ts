@@ -48,4 +48,20 @@ export class RecurlyProvider implements ProviderClient {
     // Only return the prices that are not recurly
     return prices.filter(p => p.provider === 'stripe');
   }
+
+  /**
+   * Fetch products from Recurly (STUB)
+   */
+  async fetchProducts(): Promise<Product[]> {
+    console.warn('RecurlyProvider is deprecated and fetchProducts is not implemented');
+    return [];
+  }
+
+  /**
+   * Fetch prices from Recurly (STUB)
+   */
+  async fetchPrices(): Promise<Price[]> {
+    console.warn('RecurlyProvider is deprecated and fetchPrices is not implemented');
+    return [];
+  }
 }

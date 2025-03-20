@@ -3,7 +3,10 @@ import {
   ConfigSchema,
   PaCOptions,
   SyncResult,
-  ProviderOptions
+  ProviderOptions,
+  PullResult,
+  Product,
+  Price
 } from './types.js';
 import { readConfigFromFile, writeConfigToFile } from './loader.js';
 import { initializeProviders } from './providers/index.js';
@@ -41,7 +44,8 @@ export function loadEnvironment(options?: Partial<PaCOptions>): PaCOptions {
   return {
     configPath,
     providers,
-    writeBack: options?.writeBack ?? false
+    writeBack: options?.writeBack ?? false,
+    format: options?.format ?? 'yaml'
   };
 }
 
@@ -115,6 +119,87 @@ export async function syncProviders(
     };
   } catch (error) {
     console.error('❌ Error during synchronization:', error);
+    throw error;
+  }
+}
+
+/**
+ * Pull catalog from providers and generate a configuration file
+ */
+export async function pullFromProviders(
+  options: PaCOptions
+): Promise<PullResult> {
+  console.log('🔄 Starting pull operation from providers...');
+  
+  try {
+    // Initialize providers
+    const { providers } = initializeProviders(options.providers);
+    let allProducts: Product[] = [];
+    let allPrices: Price[] = [];
+    
+    // Pull from each provider
+    for (const [providerName, provider] of Object.entries(providers)) {
+      console.log(`📥 Pulling data from ${providerName}...`);
+      
+      // Fetch products first
+      const products = await provider.fetchProducts();
+      console.log(`📋 Fetched ${products.length} products from ${providerName}`);
+      allProducts = [...allProducts, ...products];
+      
+      // Fetch prices next
+      const prices = await provider.fetchPrices();
+      console.log(`💰 Fetched ${prices.length} prices from ${providerName}`);
+      allPrices = [...allPrices, ...prices];
+    }
+    
+    // Create config
+    const config = {
+      products: allProducts,
+      prices: allPrices
+    };
+    
+    // Validate with Zod schema
+    const validatedConfig = ConfigSchema.parse(config);
+    
+    // Write to file if configPath is provided
+    if (options.configPath) {
+      // Determine file extension based on format option
+      const originalPath = options.configPath;
+      const format = options.format || 'yaml';
+      
+      // If the provided path doesn't match the desired format, adjust it
+      const extension = path.extname(originalPath).toLowerCase();
+      let outputPath = originalPath;
+      
+      if (format === 'yaml' && !extension.match(/\.ya?ml$/)) {
+        outputPath = originalPath.replace(/\.[^.]+$/, '') + '.yml';
+      } else if (format === 'json' && extension !== '.json') {
+        outputPath = originalPath.replace(/\.[^.]+$/, '') + '.json';
+      } else if (format === 'ts' && extension !== '.ts') {
+        outputPath = originalPath.replace(/\.[^.]+$/, '') + '.ts';
+      }
+      
+      // If the path was changed, inform the user
+      if (outputPath !== originalPath) {
+        console.log(`ℹ️ Adjusting output file to match requested format: ${outputPath}`);
+      }
+      
+      // Write to file
+      await writeConfigToFile(outputPath, validatedConfig);
+      console.log(`✅ Configuration saved to ${outputPath}`);
+      
+      return {
+        config: validatedConfig,
+        configPath: outputPath
+      };
+    }
+    
+    return {
+      config: validatedConfig,
+      configPath: options.configPath || ''
+    };
+  } catch (error) {
+    console.error('❌ Error during pull operation:', error);
     throw error;
   }
 }

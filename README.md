@@ -10,8 +10,10 @@ Define your product pricing schemas with type-safe definitions and synchronize t
 
 - **Type-Safe**: Use TypeScript and Zod schemas to define your pricing models with full type safety
 - **Declarative**: Define your products and prices in code, sync them to providers
+- **Bidirectional**: Use Push mode to sync local configs to providers, or Pull mode to generate configs from existing providers
 - **Idempotent**: Run it multiple times, only changes what's needed
 - **Push Model**: Push your config to different environments without ID conflicts
+- **Pull Model**: Generate config files from existing provider data to onboard existing customers
 - **Metadata Support**: Add custom metadata to your products and prices
 - **YAML or TypeScript**: Define your pricing in either YAML or TypeScript format
 - **Extensible**: Easily add support for your own billing providers
@@ -107,12 +109,30 @@ npx prices-as-code pricing.ts
 ## CLI Options
 
 ```
-prices-as-code [configPath] [options]
+prices-as-code [command] [configPath] [options]
+
+Commands:
+  sync             Synchronize your pricing schema with provider (default)
+  pull             Pull pricing from provider into a local config file
 
 Options:
   --env=<path>          Path to .env file
   --stripe-key=<key>    Stripe API key
-  --write-back          Write provider IDs back to config file (legacy behavior)
+  --write-back          Write provider IDs back to config file (only for sync)
+  --format=<format>     Output format for 'pull' command (yaml, json, ts)
+```
+
+### Examples
+
+```bash
+# Sync local pricing to provider (Push mode)
+npx prices-as-code pricing.ts
+
+# Pull provider pricing to local file (Pull mode)
+npx prices-as-code pull pricing.yml
+
+# Pull provider pricing with specific format
+npx prices-as-code pull --format=ts pricing.ts
 ```
 
 ## Supported Providers
@@ -128,6 +148,8 @@ Required environment variables:
 
 
 ## Programmatic Usage
+
+### Push Mode (Sync)
 
 ```typescript
 import { pac } from "prices-as-code";
@@ -159,6 +181,35 @@ async function syncPricing() {
 syncPricing();
 ```
 
+### Pull Mode (Import)
+
+```typescript
+import { pac } from "prices-as-code";
+
+async function pullPricing() {
+  try {
+    const result = await pac.pull({
+      configPath: "./pricing.yml", // Output file path
+      providers: [
+        {
+          provider: "stripe",
+          options: {
+            secretKey: process.env.STRIPE_SECRET_KEY,
+          },
+        },
+      ],
+      format: "yaml", // 'yaml', 'json', or 'ts'
+    });
+
+    console.log("Pull complete:", result);
+  } catch (error) {
+    console.error("Pull failed:", error);
+  }
+}
+
+pullPricing();
+```
+
 ## Adding Your Own Provider
 
 You can extend the library with your own providers by implementing the `ProviderClient` interface:
@@ -171,6 +222,7 @@ export class MyCustomProvider implements ProviderClient {
     // Initialize your provider client
   }
 
+  // Push mode methods - required
   async syncProducts(products: Product[]): Promise<Product[]> {
     // Implement product synchronization
     return products;
@@ -179,6 +231,17 @@ export class MyCustomProvider implements ProviderClient {
   async syncPrices(prices: Price[]): Promise<Price[]> {
     // Implement price synchronization
     return prices;
+  }
+
+  // Pull mode methods - required
+  async fetchProducts(): Promise<Product[]> {
+    // Implement product fetching from provider
+    return [];
+  }
+
+  async fetchPrices(): Promise<Price[]> {
+    // Implement price fetching from provider
+    return [];
   }
 }
 ```
@@ -190,7 +253,8 @@ Visit our [documentation website](https://wickdninja.github.io/prices-as-code) f
 ### Guides
 
 - [Getting Started](https://wickdninja.github.io/prices-as-code/guides/getting-started)
-- [Push Model](https://wickdninja.github.io/prices-as-code/guides/push-model) (New in v3.2.0)
+- [Push Model](https://wickdninja.github.io/prices-as-code/guides/push-model)
+- [Pull Model](https://wickdninja.github.io/prices-as-code/guides/pull-model) (New in v3.3.0)
 - [Configuration Format](https://wickdninja.github.io/prices-as-code/guides/configuration-file)
 - [Command Line Interface](https://wickdninja.github.io/prices-as-code/guides/cli)
 - [Custom Providers](https://wickdninja.github.io/prices-as-code/guides/custom-providers)

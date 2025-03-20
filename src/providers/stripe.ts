@@ -3,8 +3,10 @@ import {
   StripeProduct,
   StripePrice,
   StripeOptions,
+  StripeRecurring,
   Product,
   Price,
+  PriceInterval,
   ProviderClient,
 } from '../types.js';
 
@@ -21,6 +23,73 @@ export class StripeProvider implements ProviderClient {
 
   getClient(): Stripe {
     return this.client;
+  }
+  
+  /**
+   * Fetch all products from Stripe
+   */
+  async fetchProducts(): Promise<Product[]> {
+    console.log('📥 Fetching products from Stripe...');
+    
+    try {
+      // Fetch existing products with pagination support
+      const stripeProducts: Stripe.Product[] = [];
+      let hasMore = true;
+      let startingAfter: string | undefined;
+      
+      while (hasMore) {
+        const params: Stripe.ProductListParams = { limit: 100, active: true };
+        if (startingAfter) {
+          params.starting_after = startingAfter;
+        }
+        
+        const response = await this.client.products.list(params);
+        stripeProducts.push(...response.data);
+        
+        hasMore = response.has_more;
+        if (response.data.length > 0) {
+          startingAfter = response.data[response.data.length - 1].id;
+        } else {
+          hasMore = false;
+        }
+      }
+      
+      console.log(`📋 Found ${stripeProducts.length} products in Stripe`);
+      
+      // Convert Stripe products to our format
+      const products: StripeProduct[] = stripeProducts.map(product => {
+        // Build product from Stripe data
+        const parsedFeatures = product.metadata?.features ? 
+          JSON.parse(product.metadata.features as string) : [];
+          
+        const highlight = product.metadata?.highlight === 'true';
+        
+        // Generate a key or use the one from metadata
+        const key = product.metadata?.key || product.name.toLowerCase().replace(/\s+/g, '_');
+        
+        // Store in mapping for prices lookup
+        this.productIdMap.set(key, product.id);
+        
+        return {
+          id: product.id,
+          name: product.name,
+          description: product.description || '',
+          provider: 'stripe',
+          key: key,
+          features: parsedFeatures,
+          highlight,
+          metadata: {
+            ...product.metadata,
+            stripeCreated: product.created.toString()
+          }
+        };
+      });
+      
+      return products;
+    } catch (error: any) {
+      console.error(`❌ Error fetching products from Stripe: ${error?.message || error}`);
+      throw error;
+    }
   }
 
   /**
@@ -326,6 +395,102 @@ export class StripeProvider implements ProviderClient {
   /**
    * Synchronize prices with Stripe
    */
+  /**
+   * Fetch all prices from Stripe
+   */
+  async fetchPrices(): Promise<Price[]> {
+    console.log('📥 Fetching prices from Stripe...');
+    
+    try {
+      // Ensure we have products first
+      if (this.productIdMap.size === 0) {
+        console.log('📊 Fetching products first to establish relationships...');
+        await this.fetchProducts();
+      }
+      
+      // Fetch existing prices with pagination support
+      const stripePrices: Stripe.Price[] = [];
+      let hasMore = true;
+      let startingAfter: string | undefined;
+      
+      while (hasMore) {
+        const params: Stripe.PriceListParams = { limit: 100, active: true };
+        if (startingAfter) {
+          params.starting_after = startingAfter;
+        }
+        
+        const response = await this.client.prices.list(params);
+        stripePrices.push(...response.data);
+        
+        hasMore = response.has_more;
+        if (response.data.length > 0) {
+          startingAfter = response.data[response.data.length - 1].id;
+        } else {
+          hasMore = false;
+        }
+      }
+      
+      console.log(`💰 Found ${stripePrices.length} prices in Stripe`);
+      
+      // Create a reverse mapping from product ID to key
+      const productKeyMap = new Map<string, string>();
+      this.productIdMap.forEach((id, key) => {
+        productKeyMap.set(id, key);
+      });
+      
+      // Convert Stripe prices to our format
+      const prices: StripePrice[] = stripePrices.map(price => {
+        // Determine price type
+        const type = price.recurring ? 'recurring' : 'one_time';
+        
+        // Build recurring configuration if needed
+        let recurring: StripeRecurring | undefined;
+        if (price.recurring) {
+          recurring = {
+            interval: price.recurring.interval as PriceInterval,
+            intervalCount: price.recurring.interval_count !== null ? price.recurring.interval_count : 1,
+            usageType: price.recurring.usage_type as 'licensed' | 'metered' | undefined,
+            aggregateUsage: price.recurring.aggregate_usage as 'sum' | 'last_during_period' | 'last_ever' | 'max' | undefined,
+            trialPeriodDays: price.recurring.trial_period_days !== null ? price.recurring.trial_period_days : undefined
+          };
+        }
+        
+        // Generate a key or use existing one
+        const key = price.metadata?.key || 
+          `${price.nickname?.toLowerCase().replace(/\s+/g, '_') || 'price'}_${Date.now()}`;
+        
+        // Find product key
+        const productKey = productKeyMap.get(price.product as string);
+        
+        return {
+          id: price.id,
+          name: price.metadata?.original_name as string || price.nickname || 'Unnamed Price',
+          nickname: price.nickname || '',
+          unitAmount: price.unit_amount !== null ? price.unit_amount : 0,
+          currency: price.currency.toUpperCase(),
+          type,
+          recurring,
+          provider: 'stripe',
+          active: price.active,
+          key,
+          productId: price.product as string,
+          productKey,
+          taxBehavior: price.tax_behavior as 'inclusive' | 'exclusive' | 'unspecified' | undefined,
+          billingScheme: price.billing_scheme as 'per_unit' | 'tiered' | undefined,
+          metadata: {
+            ...price.metadata,
+            stripeCreated: price.created.toString()
+          }
+        };
+      });
+      
+      return prices;
+    } catch (error: any) {
+      console.error(`❌ Error fetching prices from Stripe: ${error?.message || error}`);
+      throw error;
+    }
+  }
+  
   async syncPrices(prices: Price[]): Promise<Price[]> {
     const stripePrices = prices.filter(
       (p) => p.provider === 'stripe'

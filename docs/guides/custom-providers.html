@@ -39,37 +39,25 @@
 
             <h2>Provider Interface</h2>
 
-            <p>Every provider in Prices as Code must implement the Provider interface, which defines the methods needed to synchronize products and prices:</p>
+            <p>Every provider in Prices as Code must implement the ProviderClient interface, which defines the methods needed to synchronize products and prices in both push and pull modes:</p>
 
             <div class="highlight">
-                <pre><code class="language-typescript">interface Provider {
-  // Unique identifier for the provider
-  readonly name: string;
+                <pre><code class="language-typescript">interface ProviderClient {
+  // Push mode methods (for writing to the provider)
+  syncProducts(products: Product[]): Promise<Product[]>;
+  syncPrices(prices: Price[]): Promise<Price[]>;
   
-  // Initialize the provider with options
-  initialize(options: any): Promise<void>;
-  
-  // Fetch existing products from the provider
+  // Pull mode methods (for reading from the provider)
   fetchProducts(): Promise<Product[]>;
-  
-  // Fetch existing prices from the provider
   fetchPrices(): Promise<Price[]>;
-  
-  // Create a new product
-  createProduct(product: Product): Promise<Product>;
-  
-  // Update an existing product
-  updateProduct(product: Product): Promise<Product>;
-  
-  // Create a new price
-  createPrice(price: Price): Promise<Price>;
-  
-  // Update an existing price
-  updatePrice(price: Price): Promise<Price>;
-  
-  // Additional methods as needed
 }</code></pre>
             </div>
+
+            <p>The interface is intentionally simple, with just four methods:</p>
+            <ul>
+                <li><strong>syncProducts/syncPrices</strong>: Implement these to support the Push model (writing to the provider)</li>
+                <li><strong>fetchProducts/fetchPrices</strong>: Implement these to support the Pull model (reading from the provider)</li>
+            </ul>
 
             <h2>Creating a Custom Provider</h2>
 
@@ -86,15 +74,14 @@ interface PaymentXOptions {
   baseUrl?: string;
 }
 
-export class PaymentXProvider implements Provider {
-  // Provider name
-  readonly name = 'paymentx';
-  
+export class PaymentXProvider implements ProviderClient {
   // PaymentX client instance
-  private client: PaymentXClient | null = null;
+  private client: PaymentXClient;
   
-  // Initialize the provider with options
-  async initialize(options: PaymentXOptions): Promise<void> {
+  // Store mappings from keys to IDs
+  private productIdMap: Map<string, string> = new Map();
+  
+  constructor(options: PaymentXOptions) {
     if (!options.apiKey) {
       throw new Error('PaymentX API key is required');
     }
@@ -103,180 +90,344 @@ export class PaymentXProvider implements Provider {
       apiKey: options.apiKey,
       baseUrl: options.baseUrl || 'https://api.paymentx.com',
     });
-    
-    // Test the connection
-    await this.client.test();
   }
   
-  // Fetch existing products from PaymentX
+  /**
+   * Fetch products from PaymentX (Pull model)
+   */
   async fetchProducts(): Promise<Product[]> {
-    if (!this.client) {
-      throw new Error('Provider not initialized');
-    }
+    console.log('📥 Fetching products from PaymentX...');
     
     // Fetch products from PaymentX
     const paymentXProducts = await this.client.products.list();
     
+    console.log(`📋 Found ${paymentXProducts.length} products in PaymentX`);
+    
     // Map PaymentX products to Prices as Code products
-    return paymentXProducts.map(product => ({
-      provider: this.name,
-      id: product.id,
-      name: product.name,
-      description: product.description,
-      // Map other fields as needed
-      metadata: product.metadata || {},
-    }));
+    const products = paymentXProducts.map(product => {
+      // Generate a key or use the one from metadata
+      const key = product.metadata?.key || product.name.toLowerCase().replace(/\s+/g, '_');
+      
+      // Store in mapping for prices lookup
+      this.productIdMap.set(key, product.id);
+      
+      return {
+        id: product.id,
+        name: product.name,
+        description: product.description || '',
+        provider: 'paymentx',
+        key: key,
+        metadata: {
+          ...product.metadata,
+          // Store provider-specific details in metadata
+          paymentxCreated: product.created_at
+        }
+      };
+    });
+    
+    return products;
   }
   
-  // Fetch existing prices from PaymentX
+  /**
+   * Fetch prices from PaymentX (Pull model)
+   */
   async fetchPrices(): Promise<Price[]> {
-    if (!this.client) {
-      throw new Error('Provider not initialized');
+    console.log('📥 Fetching prices from PaymentX...');
+    
+    // Ensure we have products first for establishing relationships
+    if (this.productIdMap.size === 0) {
+      console.log('📊 Fetching products first to establish relationships...');
+      await this.fetchProducts();
     }
     
     // Fetch prices from PaymentX
     const paymentXPrices = await this.client.prices.list();
     
+    console.log(`💰 Found ${paymentXPrices.length} prices in PaymentX`);
+    
+    // Create a reverse mapping from product ID to key
+    const productKeyMap = new Map<string, string>();
+    this.productIdMap.forEach((id, key) => {
+      productKeyMap.set(id, key);
+    });
+    
     // Map PaymentX prices to Prices as Code prices
-    return paymentXPrices.map(price => ({
-      provider: this.name,
-      id: price.id,
-      name: price.name,
-      nickname: price.nickname || price.name,
-      unitAmount: price.amount,
-      currency: price.currency,
-      type: price.recurring ? 'recurring' : 'one_time',
-      recurring: price.recurring ? {
-        interval: price.recurring.interval,
-        intervalCount: price.recurring.interval_count,
-      } : undefined,
-      productId: price.product_id,
-      metadata: price.metadata || {},
-    }));
-  }
-  
-  // Create a new product in PaymentX
-  async createProduct(product: Product): Promise<Product> {
-    if (!this.client) {
-      throw new Error('Provider not initialized');
-    }
-    
-    // Create product in PaymentX
-    const paymentXProduct = await this.client.products.create({
-      name: product.name,
-      description: product.description || '',
-      // Other fields as needed by PaymentX
-      metadata: product.metadata || {},
+    const prices = paymentXPrices.map(price => {
+      // Determine price type
+      const type = price.recurring ? 'recurring' : 'one_time';
+      
+      // Build recurring configuration if needed
+      let recurring = undefined;
+      if (price.recurring) {
+        recurring = {
+          interval: price.recurring.interval,
+          intervalCount: price.recurring.interval_count,
+        };
+      }
+      
+      // Generate a key or use existing one
+      const key = price.metadata?.key || 
+        `${price.nickname?.toLowerCase().replace(/\s+/g, '_') || 'price'}_${Date.now()}`;
+      
+      // Find product key
+      const productKey = productKeyMap.get(price.product_id);
+      
+      return {
+        id: price.id,
+        name: price.nickname || 'Unnamed Price',
+        nickname: price.nickname || '',
+        unitAmount: price.amount,
+        currency: price.currency.toUpperCase(),
+        type,
+        recurring,
+        provider: 'paymentx',
+        active: price.active,
+        key,
+        productId: price.product_id,
+        productKey,
+        metadata: {
+          ...price.metadata,
+          paymentxCreated: price.created_at
+        }
+      };
     });
     
-    // Return the created product with the assigned ID
-    return {
-      ...product,
-      id: paymentXProduct.id,
-    };
+    return prices;
   }
   
-  // Update an existing product in PaymentX
-  async updateProduct(product: Product): Promise<Product> {
-    if (!this.client) {
-      throw new Error('Provider not initialized');
+  /**
+   * Sync products to PaymentX (Push model)
+   */
+  async syncProducts(products: Product[]): Promise<Product[]> {
+    // Filter products for this provider
+    const paymentXProducts = products.filter(p => p.provider === 'paymentx');
+    const updatedProducts = [];
+    const otherProviderProducts = products.filter(p => p.provider !== 'paymentx');
+    
+    console.log(`🚀 Syncing ${paymentXProducts.length} products to PaymentX...`);
+    
+    if (paymentXProducts.length === 0) {
+      console.log('No PaymentX products to sync');
+      return products;
     }
     
-    if (!product.id) {
-      throw new Error('Product ID is required for updates');
+    // Fetch existing products
+    const existingProducts = await this.client.products.list();
+    console.log(`📋 Found ${existingProducts.length} existing products in PaymentX`);
+    
+    for (const product of paymentXProducts) {
+      try {
+        // Generate key if not present
+        const key = product.key || product.name.toLowerCase().replace(/\s+/g, '_');
+        
+        console.log(`📋 Processing product: ${product.name} (key: ${key})`);
+        
+        // Find existing product by key in metadata
+        const existingProduct = existingProducts.find(
+          p => p.metadata && p.metadata.key === key
+        );
+        
+        if (existingProduct) {
+          console.log(`📋 Found existing product with key: ${key} (${existingProduct.id})`);
+          
+          // Update existing product
+          const updated = await this.client.products.update(existingProduct.id, {
+            name: product.name,
+            description: product.description || '',
+            metadata: {
+              ...product.metadata,
+              key
+            }
+          });
+          
+          // Store the mapping
+          this.productIdMap.set(key, updated.id);
+          
+          // Update product with provider ID
+          updatedProducts.push({
+            ...product,
+            id: updated.id,
+            key
+          });
+          
+          console.log(`✅ Updated product: ${product.name} (ID: ${updated.id})`);
+        } else {
+          console.log(`📋 Creating new product with key: ${key}`);
+          
+          // Create new product
+          const newProduct = await this.client.products.create({
+            name: product.name,
+            description: product.description || '',
+            metadata: {
+              ...product.metadata,
+              key
+            }
+          });
+          
+          // Store the mapping
+          this.productIdMap.set(key, newProduct.id);
+          
+          // Update product with provider ID
+          updatedProducts.push({
+            ...product,
+            id: newProduct.id,
+            key
+          });
+          
+          console.log(`✅ Created product: ${product.name} (ID: ${newProduct.id})`);
+        }
+      } catch (error) {
+        console.error(`❌ Error syncing product ${product.name}: ${error.message}`);
+        
+        // Add to updated list but mark as failed
+        updatedProducts.push({
+          ...product,
+          metadata: {
+            ...product.metadata,
+            syncError: error.message,
+            syncFailed: 'true'
+          }
+        });
+      }
     }
     
-    // Update product in PaymentX
-    const paymentXProduct = await this.client.products.update(product.id, {
-      name: product.name,
-      description: product.description || '',
-      // Other fields as needed by PaymentX
-      metadata: product.metadata || {},
-    });
-    
-    // Return the updated product
-    return {
-      ...product,
-      id: paymentXProduct.id,
-    };
+    return [...updatedProducts, ...otherProviderProducts];
   }
   
-  // Create a new price in PaymentX
-  async createPrice(price: Price): Promise<Price> {
-    if (!this.client) {
-      throw new Error('Provider not initialized');
+  /**
+   * Sync prices to PaymentX (Push model)
+   */
+  async syncPrices(prices: Price[]): Promise<Price[]> {
+    // Filter prices for this provider
+    const paymentXPrices = prices.filter(p => p.provider === 'paymentx');
+    const updatedPrices = [];
+    const otherProviderPrices = prices.filter(p => p.provider !== 'paymentx');
+    
+    console.log(`💰 Syncing ${paymentXPrices.length} prices to PaymentX...`);
+    
+    if (paymentXPrices.length === 0) {
+      console.log('No PaymentX prices to sync');
+      return prices;
     }
     
-    if (!price.productId) {
-      throw new Error('Product ID is required for price creation');
+    // Fetch existing prices
+    const existingPrices = await this.client.prices.list();
+    console.log(`💰 Found ${existingPrices.length} existing prices in PaymentX`);
+    
+    for (const price of paymentXPrices) {
+      try {
+        // Ensure the price has a valid key
+        const key = price.key || `${price.name.toLowerCase().replace(/\s+/g, '_')}_${Date.now()}`;
+        console.log(`💰 Processing price: ${price.name} (key: ${key})`);
+        
+        // Resolve product ID
+        let productId = price.productId;
+        if (price.productKey && !productId) {
+          productId = this.productIdMap.get(price.productKey);
+          
+          if (!productId) {
+            throw new Error(
+              `Could not find product ID for key: ${price.productKey}. Ensure products are synced before prices.`
+            );
+          }
+          console.log(`💰 Resolved product ID ${productId} from key ${price.productKey}`);
+        }
+        
+        // Find existing price by key in metadata
+        const existingPrice = existingPrices.find(
+          p => p.metadata && p.metadata.key === key
+        );
+        
+        if (existingPrice) {
+          console.log(`💰 Found existing price with key: ${key} (${existingPrice.id})`);
+          
+          // Create update data
+          const updateData = {
+            nickname: price.nickname || price.name,
+            metadata: {
+              ...price.metadata,
+              key
+            },
+            active: price.active !== false
+          };
+          
+          // Update existing price
+          const updated = await this.client.prices.update(existingPrice.id, updateData);
+          
+          // Update price with provider ID
+          updatedPrices.push({
+            ...price,
+            id: updated.id,
+            key
+          });
+          
+          console.log(`✅ Updated price: ${price.name} (ID: ${updated.id})`);
+        } else {
+          console.log(`💰 Creating new price with key: ${key}`);
+          
+          // Create new price
+          const newPrice = await this.client.prices.create({
+            product_id: productId,
+            nickname: price.nickname || price.name,
+            amount: price.unitAmount,
+            currency: price.currency.toLowerCase(),
+            recurring: price.recurring ? {
+              interval: price.recurring.interval,
+              interval_count: price.recurring.intervalCount || 1
+            } : undefined,
+            metadata: {
+              ...price.metadata,
+              key,
+              original_name: price.name
+            }
+          });
+          
+          // Update price with provider ID
+          updatedPrices.push({
+            ...price,
+            id: newPrice.id,
+            key
+          });
+          
+          console.log(`✅ Created price: ${price.name} (ID: ${newPrice.id})`);
+        }
+      } catch (error) {
+        console.error(`❌ Error syncing price ${price.name}: ${error.message}`);
+        
+        // Add to updated list but mark as failed
+        updatedPrices.push({
+          ...price,
+          metadata: {
+            ...price.metadata,
+            syncError: error.message,
+            syncFailed: 'true'
+          }
+        });
+      }
     }
     
-    // Create price in PaymentX
-    const paymentXPrice = await this.client.prices.create({
-      product_id: price.productId,
-      nickname: price.nickname || price.name,
-      amount: price.unitAmount,
-      currency: price.currency,
-      recurring: price.recurring ? {
-        interval: price.recurring.interval,
-        interval_count: price.recurring.intervalCount,
-      } : undefined,
-      // Other fields as needed by PaymentX
-      metadata: price.metadata || {},
-    });
-    
-    // Return the created price with the assigned ID
-    return {
-      ...price,
-      id: paymentXPrice.id,
-    };
-  }
-  
-  // Update an existing price in PaymentX
-  async updatePrice(price: Price): Promise<Price> {
-    if (!this.client) {
-      throw new Error('Provider not initialized');
-    }
-    
-    if (!price.id) {
-      throw new Error('Price ID is required for updates');
-    }
-    
-    // Update price in PaymentX
-    const paymentXPrice = await this.client.prices.update(price.id, {
-      nickname: price.nickname || price.name,
-      // Note: Some providers might not allow updating amount after creation
-      // Other fields as needed by PaymentX
-      metadata: price.metadata || {},
-    });
-    
-    // Return the updated price
-    return {
-      ...price,
-      id: paymentXPrice.id,
-    };
+    return [...updatedPrices, ...otherProviderPrices];
   }
 }</code></pre>
             </div>
 
             <h2>Using Your Custom Provider</h2>
 
-            <p>After creating your custom provider, you can use it with Prices as Code:</p>
+            <p>After creating your custom provider, you can use it with Prices as Code for both Push and Pull operations:</p>
+
+            <h3>For Push Operations (Sync)</h3>
 
             <div class="highlight">
                 <pre><code class="language-typescript">import { pac } from 'prices-as-code';
 import { PaymentXProvider } from './providers/paymentx.js';
 
 async function syncPricing() {
-  // Create an instance of your custom provider
-  const paymentXProvider = new PaymentXProvider();
-  
   try {
     const result = await pac({
       configPath: './pricing.ts',
       providers: [
         {
-          provider: paymentXProvider,
+          provider: 'paymentx',
           options: {
             apiKey: process.env.PAYMENTX_API_KEY,
             // Any other options your provider needs
@@ -294,6 +445,39 @@ async function syncPricing() {
 }
 
 syncPricing();</code></pre>
+            </div>
+
+            <h3>For Pull Operations</h3>
+
+            <div class="highlight">
+                <pre><code class="language-typescript">import { pac } from 'prices-as-code';
+import { PaymentXProvider } from './providers/paymentx.js';
+
+async function pullPricing() {
+  try {
+    const result = await pac.pull({
+      configPath: './pricing.yml',
+      providers: [
+        {
+          provider: 'paymentx',
+          options: {
+            apiKey: process.env.PAYMENTX_API_KEY,
+            // Any other options your provider needs
+          }
+        }
+      ],
+      format: 'yaml', // Can be 'yaml', 'json', or 'ts'
+    });
+    
+    console.log('Pull completed!');
+    console.log(`Pulled ${result.config.products.length} products and ${result.config.prices.length} prices`);
+    console.log(`Saved to ${result.configPath}`);
+  } catch (error) {
+    console.error('Pull failed:', error);
+  }
+}
+
+pullPricing();</code></pre>
             </div>
 
             <h2>Provider Registration</h2>

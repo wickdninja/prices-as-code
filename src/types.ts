@@ -143,6 +143,7 @@ export const PaCOptionsSchema = z.object({
   configPath: z.string().optional(),
   providers: z.array(ProviderOptionsSchema),
   writeBack: z.boolean().optional().default(false),
+  format: z.enum(['yaml', 'json', 'ts']).optional().default('yaml'),
 });
 export type PaCOptions = z.infer<typeof PaCOptionsSchema>;
 
@@ -156,11 +157,24 @@ export const SyncResultSchema = z.object({
 export type SyncResult = z.infer<typeof SyncResultSchema>;
 
 /**
+ * Result of pull operation
+ */
+export const PullResultSchema = z.object({
+  config: ConfigSchema,
+  configPath: z.string(),
+});
+export type PullResult = z.infer<typeof PullResultSchema>;
+
+/**
  * Provider client interfaces
  */
 export interface ProviderClient {
   syncProducts(products: Product[]): Promise<Product[]>;
   syncPrices(prices: Price[]): Promise<Price[]>;
+  
+  // Pull mode methods
+  fetchProducts(): Promise<Product[]>;
+  fetchPrices(): Promise<Price[]>;
 }
 
 /**
