@@ -10,6 +10,7 @@ Define your product pricing schemas with type-safe definitions and synchronize t
 
 - **Type-Safe**: Use TypeScript and Zod schemas to define your pricing models with full type safety
 - **Declarative**: Define your products and prices in code, sync them to providers
+- **Scaffolding**: Generate template pricing structures to quickly get started
 - **Bidirectional**: Use Push mode to sync local configs to providers, or Pull mode to generate configs from existing providers
 - **Idempotent**: Run it multiple times, only changes what's needed
 - **Push Model**: Push your config to different environments without ID conflicts
@@ -114,12 +115,20 @@ prices-as-code [command] [configPath] [options]
 Commands:
   sync             Synchronize your pricing schema with provider (default)
   pull             Pull pricing from provider into a local config file
+  generate         Generate a template pricing structure
 
 Options:
   --env=<path>          Path to .env file
   --stripe-key=<key>    Stripe API key
   --write-back          Write provider IDs back to config file (only for sync)
-  --format=<format>     Output format for 'pull' command (yaml, json, ts)
+  --format=<format>     Output format for 'pull' and 'generate' commands (yaml, json, ts)
+  
+Generate Options:
+  --tiers=<tiers>       Comma-separated list of product tiers (default: basic,pro,enterprise)
+  --currency=<cur>      ISO currency code (default: usd)
+  --intervals=<int>     Comma-separated list of intervals (default: month,year)
+  --no-metadata         Don't include metadata in generated file
+  --no-features         Don't include feature lists in generated products
 ```
 
 ### Examples
@@ -133,6 +142,12 @@ npx prices-as-code pull pricing.yml
 
 # Pull provider pricing with specific format
 npx prices-as-code pull --format=ts pricing.ts
+
+# Generate a template pricing structure
+npx prices-as-code generate pricing.yml
+
+# Generate with custom tiers and currency
+npx prices-as-code generate --tiers=free,basic,pro --currency=eur pricing.yml
 ```
 
 ## Supported Providers
@@ -210,6 +225,33 @@ async function pullPricing() {
 pullPricing();
 ```
 
+### Generate Mode (Scaffolding)
+
+```typescript
+import { pac } from "prices-as-code";
+
+async function generatePricing() {
+  try {
+    const result = await pac.generate({
+      configPath: "./pricing.yml", // Output file path
+      format: "yaml", // 'yaml', 'json', or 'ts'
+      provider: "stripe",
+      productTiers: ["basic", "pro", "enterprise"], // Custom tiers
+      intervals: ["month", "year"], // Billing intervals
+      currency: "usd",
+      includeMetadata: true,
+      includeFeatures: true
+    });
+
+    console.log("Template generated:", result);
+  } catch (error) {
+    console.error("Generation failed:", error);
+  }
+}
+
+generatePricing();
+```
+
 ## Adding Your Own Provider
 
 You can extend the library with your own providers by implementing the `ProviderClient` interface:
@@ -255,6 +297,7 @@ Visit our [documentation website](https://wickdninja.github.io/prices-as-code) f
 - [Getting Started](https://wickdninja.github.io/prices-as-code/guides/getting-started)
 - [Push Model](https://wickdninja.github.io/prices-as-code/guides/push-model)
 - [Pull Model](https://wickdninja.github.io/prices-as-code/guides/pull-model) (New in v3.3.0)
+- [Generate Templates](https://wickdninja.github.io/prices-as-code/guides/generate) (New in v3.5.0)
 - [Configuration Format](https://wickdninja.github.io/prices-as-code/guides/configuration-file)
 - [Command Line Interface](https://wickdninja.github.io/prices-as-code/guides/cli)
 - [Custom Providers](https://wickdninja.github.io/prices-as-code/guides/custom-providers)

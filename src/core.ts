@@ -6,7 +6,9 @@ import {
   ProviderOptions,
   PullResult,
   Product,
-  Price
+  Price,
+  GenerateOptions,
+  GenerateOptionsSchema
 } from './types.js';
 import { readConfigFromFile, writeConfigToFile } from './loader.js';
 import { initializeProviders } from './providers/index.js';
@@ -207,6 +209,121 @@ export async function pullFromProviders(
 /**
  * Main entry point for the Prices as Code tool
  */
+/**
+ * Generate a basic price file template
+ */
+export async function generateTemplate(options: Partial<GenerateOptions>): Promise<Config> {
+  try {
+    // Validate and apply defaults
+    const resolvedOptions = GenerateOptionsSchema.parse(options);
+    console.log(`🎨 Generating template with ${resolvedOptions.productTiers.length} product tiers and ${resolvedOptions.intervals.length} interval types...`);
+    
+    const products: Product[] = [];
+    const prices: Price[] = [];
+    
+    // Create products based on tiers
+    for (let i = 0; i < resolvedOptions.productTiers.length; i++) {
+      const tier = resolvedOptions.productTiers[i];
+      const isMiddleTier = i === 1 || (resolvedOptions.productTiers.length === 2 && i === 0);
+      
+      // Create product features based on tier
+      let features: string[] = [];
+      if (resolvedOptions.includeFeatures) {
+        // Basic features for all tiers
+        features = ['Core feature 1', 'Core feature 2'];
+        
+        // Add tier-specific features
+        if (i >= 1) {
+          features.push(`${tier.charAt(0).toUpperCase() + tier.slice(1)} feature 1`);
+          features.push(`${tier.charAt(0).toUpperCase() + tier.slice(1)} feature 2`);
+        }
+        
+        if (i >= 2) {
+          features.push(`${tier.charAt(0).toUpperCase() + tier.slice(1)} feature 3`);
+        }
+      }
+      
+      // Create product object
+      const product: Product = {
+        provider: resolvedOptions.provider,
+        name: `${tier.charAt(0).toUpperCase() + tier.slice(1)} Plan`,
+        description: `${tier === 'basic' ? 'Basic' : tier === 'pro' ? 'Advanced' : 'Complete'} features for ${tier === 'basic' ? 'individuals' : tier === 'pro' ? 'professionals' : 'businesses'}`,
+        features: resolvedOptions.includeFeatures ? features : undefined,
+        highlight: isMiddleTier, // Highlight the middle tier (usually Pro)
+        metadata: resolvedOptions.includeMetadata ? {
+          displayOrder: i + 1,
+          key: tier.toLowerCase()
+        } : {},
+        key: tier.toLowerCase()
+      };
+      
+      products.push(product);
+      
+      // Create prices for each interval
+      for (const interval of resolvedOptions.intervals) {
+        // Set price amounts based on tier
+        // Using common SaaS pricing patterns:
+        // - Basic: $9.99/mo or $99.90/yr
+        // - Pro: $19.99/mo or $199.90/yr 
+        // - Enterprise: $49.99/mo or $499.90/yr
+        let unitAmount: number;
+        if (tier === 'basic' || tier === 'free') {
+          unitAmount = tier === 'free' ? 0 : 999;
+        } else if (tier === 'pro') {
+          unitAmount = 1999;
+        } else {
+          unitAmount = 4999;
+        }
+        
+        // For yearly pricing, multiply by 10 (represents ~2 months free)
+        if (interval === 'year') {
+          unitAmount = unitAmount * 10;
+        }
+        
+        // Create price object
+        const price: Price = {
+          provider: resolvedOptions.provider,
+          name: `${tier.charAt(0).toUpperCase() + tier.slice(1)} ${interval === 'month' ? 'Monthly' : 'Yearly'}`,
+          nickname: `${tier.charAt(0).toUpperCase() + tier.slice(1)} ${interval === 'month' ? 'Monthly' : 'Yearly'}`,
+          unitAmount: unitAmount,
+          currency: resolvedOptions.currency,
+          type: 'recurring',
+          recurring: {
+            interval: interval,
+            intervalCount: 1
+          },
+          active: true,
+          productKey: tier.toLowerCase(),
+          metadata: resolvedOptions.includeMetadata ? {
+            displayName: `${tier.charAt(0).toUpperCase() + tier.slice(1)} ${interval === 'month' ? 'Monthly' : 'Yearly'}`,
+            popular: interval === 'year',
+            ...(interval === 'year' ? { savings: '17%' } : {})
+          } : {}
+        };
+        
+        prices.push(price);
+      }
+    }
+    
+    // Create config
+    const config: Config = {
+      products,
+      prices
+    };
+    
+    // Write to file if configPath is provided
+    if (resolvedOptions.configPath) {
+      await writeConfigToFile(resolvedOptions.configPath, config);
+      console.log(`✅ Template generated and saved to ${resolvedOptions.configPath}`);
+    }
+    
+    return config;
+  } catch (error) {
+    console.error('❌ Template generation failed:', error instanceof Error ? error.message : String(error));
+    throw error;
+  }
+}
+
 export async function pricesAsCode(options: Partial<PaCOptions> = {}): Promise<SyncResult> {
   try {
     // Load environment and options

@@ -1,5 +1,5 @@
-import { PaCOptions, SyncResult, PullResult } from './types.js';
-import { pricesAsCode, pullFromProviders, loadEnvironment } from './core.js';
+import { PaCOptions, SyncResult, PullResult, Config, GenerateOptions } from './types.js';
+import { pricesAsCode, pullFromProviders, loadEnvironment, generateTemplate } from './core.js';
 
 /**
  * Prices as Code (PaC) - Main entry point
@@ -18,6 +18,14 @@ export async function pull(options: Partial<PaCOptions> = {}): Promise<PullResul
   return pullFromProviders(resolvedOptions);
 }
 
+/**
+ * Prices as Code (PaC) - Generate mode entry point
+ * Generate a template pricing structure
+ */
+export async function generate(options: Partial<GenerateOptions>): Promise<Config> {
+  return generateTemplate(options);
+}
+
 // Export types and utilities
 export * from './types.js';
 export * from './loader.js';
@@ -26,8 +34,10 @@ export * from './providers/index.js';
 
 // Extend pac with additional functions
 pac.pull = pull;
+pac.generate = generate;
 pac.pullFromProviders = pullFromProviders;
 pac.loadEnvironment = loadEnvironment;
+pac.generateTemplate = generateTemplate;
 
 // Default export
 export default pac;

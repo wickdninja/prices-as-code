@@ -148,6 +148,21 @@ export const PaCOptionsSchema = z.object({
 export type PaCOptions = z.infer<typeof PaCOptionsSchema>;
 
 /**
+ * Generate options
+ */
+export const GenerateOptionsSchema = z.object({
+  configPath: z.string(),
+  format: z.enum(['yaml', 'json', 'ts']).optional().default('yaml'),
+  provider: z.enum(['stripe']).optional().default('stripe'),
+  productTiers: z.array(z.string()).optional().default(['basic', 'pro', 'enterprise']),
+  intervals: z.array(z.enum(['month', 'year'])).optional().default(['month', 'year']),
+  currency: z.string().length(3).optional().default('usd'),
+  includeMetadata: z.boolean().optional().default(true),
+  includeFeatures: z.boolean().optional().default(true),
+});
+export type GenerateOptions = z.infer<typeof GenerateOptionsSchema>;
+
+/**
  * Result of synchronization
  */
 export const SyncResultSchema = z.object({
@@ -164,6 +179,15 @@ export const PullResultSchema = z.object({
   configPath: z.string(),
 });
 export type PullResult = z.infer<typeof PullResultSchema>;
+
+/**
+ * Result of generate operation
+ */
+export const GenerateResultSchema = z.object({
+  config: ConfigSchema,
+  configPath: z.string(),
+});
+export type GenerateResult = z.infer<typeof GenerateResultSchema>;
 
 /**
  * Provider client interfaces

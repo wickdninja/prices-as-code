@@ -1,0 +1,127 @@
+products:
+  - provider: stripe
+    name: Free Plan
+    description: Complete features for businesses
+    features:
+      - Core feature 1
+      - Core feature 2
+    highlight: false
+    metadata:
+      displayOrder: 1
+      key: free
+    key: free
+  - provider: stripe
+    name: Basic Plan
+    description: Basic features for individuals
+    features:
+      - Core feature 1
+      - Core feature 2
+      - Basic feature 1
+      - Basic feature 2
+    highlight: true
+    metadata:
+      displayOrder: 2
+      key: basic
+    key: basic
+  - provider: stripe
+    name: Pro Plan
+    description: Advanced features for professionals
+    features:
+      - Core feature 1
+      - Core feature 2
+      - Pro feature 1
+      - Pro feature 2
+      - Pro feature 3
+    highlight: false
+    metadata:
+      displayOrder: 3
+      key: pro
+    key: pro
+prices:
+  - provider: stripe
+    name: Free Monthly
+    nickname: Free Monthly
+    unitAmount: 0
+    currency: usd
+    type: recurring
+    recurring:
+      interval: month
+      intervalCount: 1
+    active: true
+    productKey: free
+    metadata:
+      displayName: Free Monthly
+      popular: false
+  - provider: stripe
+    name: Free Yearly
+    nickname: Free Yearly
+    unitAmount: 0
+    currency: usd
+    type: recurring
+    recurring:
+      interval: year
+      intervalCount: 1
+    active: true
+    productKey: free
+    metadata:
+      displayName: Free Yearly
+      popular: true
+      savings: 17%
+  - provider: stripe
+    name: Basic Monthly
+    nickname: Basic Monthly
+    unitAmount: 999
+    currency: usd
+    type: recurring
+    recurring:
+      interval: month
+      intervalCount: 1
+    active: true
+    productKey: basic
+    metadata:
+      displayName: Basic Monthly
+      popular: false
+  - provider: stripe
+    name: Basic Yearly
+    nickname: Basic Yearly
+    unitAmount: 9990
+    currency: usd
+    type: recurring
+    recurring:
+      interval: year
+      intervalCount: 1
+    active: true
+    productKey: basic
+    metadata:
+      displayName: Basic Yearly
+      popular: true
+      savings: 17%
+  - provider: stripe
+    name: Pro Monthly
+    nickname: Pro Monthly
+    unitAmount: 1999
+    currency: usd
+    type: recurring
+    recurring:
+      interval: month
+      intervalCount: 1
+    active: true
+    productKey: pro
+    metadata:
+      displayName: Pro Monthly
+      popular: false
+  - provider: stripe
+    name: Pro Yearly
+    nickname: Pro Yearly
+    unitAmount: 19990
+    currency: usd
+    type: recurring
+    recurring:
+      interval: year
+      intervalCount: 1
+    active: true
+    productKey: pro
+    metadata:
+      displayName: Pro Yearly
+      popular: true
+      savings: 17%
