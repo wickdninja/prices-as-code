@@ -1,6 +1,35 @@
-# Library Changes - Version 2.0.0
+# Library Changes
 
-## Major Changes in Version 2.0.0
+## Version 3.5.0 (New!)
+
+### Added Generate Feature
+
+- Added new `generate` command to scaffold pricing templates
+- Added CLI support for generating templates with customizable options
+- Implemented programmatic API for template generation via `generate()` function
+- Updated documentation with examples and usage guides
+- Added comprehensive test coverage for the generate feature
+- Added support for customizing tiers, intervals, currency, metadata, and features
+
+## Version 3.4.0
+
+### Added Pull Mode Functionality
+
+- Added Pull Mode for bidirectional synchronization
+- Added CLI support for pull command
+- Added support for multiple output formats (YAML, JSON, TypeScript)
+- Improved documentation with Pull Mode examples
+
+## Version 3.3.0
+
+### Enhanced Pricing Support
+
+- Added support for multiple pricing formats
+- Enhanced Stripe integration
+- Improved error handling and validation
+- Added better TypeScript typings
+
+## Version 2.0.0
 
 ### Removed Recurly Support
 

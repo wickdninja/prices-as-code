@@ -116,10 +116,18 @@ describe('CLI Tool', () => {
     // Check specific command and option presence
     expect(stdout).toContain('sync');
     expect(stdout).toContain('pull'); // Check for pull command
+    expect(stdout).toContain('generate'); // Check for generate command
     expect(stdout).toContain('-h, --help');
     expect(stdout).toContain('--env=');
     expect(stdout).toContain('--stripe-key=');
     expect(stdout).toContain('--format='); // Check for format option
+    
+    // Check generate-specific options
+    expect(stdout).toContain('--tiers=');
+    expect(stdout).toContain('--currency=');
+    expect(stdout).toContain('--intervals=');
+    expect(stdout).toContain('--no-metadata');
+    expect(stdout).toContain('--no-features');
   });
   
   // Test for -h shorthand
@@ -172,6 +180,83 @@ describe('CLI Tool', () => {
       // Clean up
       if (fs.existsSync(nonExistentPath)) {
         fs.unlinkSync(nonExistentPath);
+      }
+    }
+  });
+  
+  // Generate mode should not require existing config file
+  test('should not error when config file does not exist in generate mode', async () => {
+    const nonExistentPath = path.resolve(testOutputDir, 'new-generate-config.yml');
+    
+    // Make sure the file doesn't exist
+    if (fs.existsSync(nonExistentPath)) {
+      fs.unlinkSync(nonExistentPath);
+    }
+    
+    try {
+      const { stdout, stderr, exitCode } = await runCliAsync(['generate', nonExistentPath]);
+      
+      // The command should succeed
+      expect(exitCode).toBe(0);
+      
+      // Check that the output indicates generation
+      expect(stdout).toContain('Generating template');
+      
+      // A file should be created
+      expect(fs.existsSync(nonExistentPath)).toBe(true);
+    } catch (error) {
+      console.error('Test failed:', error);
+    } finally {
+      // Clean up
+      if (fs.existsSync(nonExistentPath)) {
+        fs.unlinkSync(nonExistentPath);
+      }
+    }
+  });
+  
+  // Test generate command with custom options
+  test('should handle custom options in generate mode', async () => {
+    const outputPath = path.resolve(testOutputDir, 'custom-generate-config.yml');
+    
+    // Make sure the file doesn't exist
+    if (fs.existsSync(outputPath)) {
+      fs.unlinkSync(outputPath);
+    }
+    
+    try {
+      const { stdout, stderr, exitCode } = await runCliAsync([
+        'generate', 
+        '--tiers=free,basic', 
+        '--currency=eur',
+        '--format=yaml',
+        outputPath
+      ]);
+      
+      // The command should succeed
+      expect(exitCode).toBe(0);
+      
+      // Check that the output indicates generation
+      expect(stdout).toContain('Generating template');
+      
+      // A file should be created
+      expect(fs.existsSync(outputPath)).toBe(true);
+      
+      // Read the file to check contents
+      const fileContent = fs.readFileSync(outputPath, 'utf8');
+      
+      // Check that the file has the custom options
+      expect(fileContent).toContain('Free Plan');
+      expect(fileContent).toContain('Basic Plan');
+      expect(fileContent).toContain('currency: eur');
+      
+      // Should not contain Enterprise Plan
+      expect(fileContent).not.toContain('Enterprise Plan');
+    } catch (error) {
+      console.error('Test failed:', error);
+    } finally {
+      // Clean up
+      if (fs.existsSync(outputPath)) {
+        fs.unlinkSync(outputPath);
       }
     }
   });

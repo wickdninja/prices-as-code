@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Generate Templates - Prices as Code</title>
+  <link rel="stylesheet" href="../assets/css/main.css">
+</head>
+<body>
+  <header>
+    <div class="container">
+      <a href="../index.html" class="logo">
+        <img src="https://raw.githubusercontent.com/wickdninja/assets/refs/heads/main/PaC.webp" alt="Prices as Code" width="50">
+        <span>Prices as Code</span>
+      </a>
+      <nav>
+        <ul>
+          <li><a href="../index.html">Home</a></li>
+          <li><a href="index.html">Guides</a></li>
+          <li><a href="../api/index.html">API</a></li>
+          <li><a href="../providers/index.html">Providers</a></li>
+          <li><a href="../components/pricing-calculator.html">Components</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="sidebar">
+      <h3>Guides</h3>
+      <ul>
+        <li><a href="getting-started.html">Getting Started</a></li>
+        <li><a href="configuration-file.html">Configuration File</a></li>
+        <li><a href="cli.html">CLI Usage</a></li>
+        <li><a href="push-model.html">Push Model</a></li>
+        <li><a href="pull-model.html">Pull Model</a></li>
+        <li><a href="generate.html" class="active">Generate Templates</a></li>
+        <li><a href="custom-pricing.html">Custom Pricing</a></li>
+        <li><a href="custom-providers.html">Custom Providers</a></li>
+        <li><a href="metadata.html">Working with Metadata</a></li>
+        <li><a href="ci-cd.html">CI/CD Integration</a></li>
+      </ul>
+    </div>
+
+    <div class="content">
+      <h1>Generate Templates</h1>
+      <p class="intro">
+        The generate feature allows you to quickly scaffold a basic pricing structure template that you can customize for your needs.
+      </p>
+
+      <section>
+        <h2>Overview</h2>
+        <p>
+          Creating a pricing structure from scratch can be time-consuming. The generate feature lets you quickly create a template pricing file with common structures like tiers, intervals, and metadata. This is perfect for getting started with Prices as Code or for quickly setting up a new pricing model.
+        </p>
+      </section>
+
+      <section>
+        <h2>Using the CLI</h2>
+        <p>
+          The simplest way to generate a pricing template is using the CLI:
+        </p>
+        <pre><code>npx prices-as-code generate pricing.yml</code></pre>
+        <p>
+          This will create a YAML file with a default pricing structure containing three tiers (basic, pro, enterprise) with monthly and yearly pricing options.
+        </p>
+      </section>
+
+      <section>
+        <h2>Customizing Your Template</h2>
+        <p>
+          You can customize your generated template with several options:
+        </p>
+        <ul>
+          <li><code>--tiers</code>: Define your product tiers (comma-separated)</li>
+          <li><code>--intervals</code>: Set billing intervals (comma-separated)</li>
+          <li><code>--currency</code>: Set the currency (ISO code)</li>
+          <li><code>--format</code>: Output format (yaml, json, or ts)</li>
+          <li><code>--no-metadata</code>: Don't include metadata in the template</li>
+          <li><code>--no-features</code>: Don't include feature lists in the template</li>
+        </ul>
+
+        <h3>Examples</h3>
+        <pre><code># Generate with custom tiers
+npx prices-as-code generate --tiers=free,basic,pro pricing.yml
+
+# Generate with custom currency and format
+npx prices-as-code generate --currency=eur --format=ts pricing.ts
+
+# Generate with only monthly billing
+npx prices-as-code generate --intervals=month pricing.yml
+
+# Generate without metadata
+npx prices-as-code generate --no-metadata pricing.yml</code></pre>
+      </section>
+
+      <section>
+        <h2>Programmatic Usage</h2>
+        <p>
+          You can also generate templates programmatically:
+        </p>
+        <pre><code>import { generate } from 'prices-as-code';
+
+async function generatePricing() {
+  const result = await generate({
+    configPath: './pricing.yml',
+    format: 'yaml',
+    productTiers: ['free', 'basic', 'pro'],
+    intervals: ['month', 'year'],
+    currency: 'usd',
+    includeMetadata: true,
+    includeFeatures: true
+  });
+  
+  console.log(`Generated template with ${result.products.length} products and ${result.prices.length} prices`);
+}
+
+generatePricing();</code></pre>
+      </section>
+
+      <section>
+        <h2>Generated Structure</h2>
+        <p>
+          The generated template includes:
+        </p>
+        <ul>
+          <li>Products for each tier with appropriate names and descriptions</li>
+          <li>Prices for each tier and interval combination</li>
+          <li>Metadata with display information</li>
+          <li>Feature lists that get more advanced with higher tiers</li>
+          <li>Pricing that follows standard SaaS patterns (monthly & yearly options with discounts)</li>
+        </ul>
+
+        <p>Here's an example of a generated template structure:</p>
+        <pre><code>products:
+  - provider: stripe
+    name: Basic Plan
+    description: Basic features for individuals
+    features:
+      - Core feature 1
+      - Core feature 2
+    highlight: false
+    metadata:
+      displayOrder: 1
+      key: basic
+    key: basic
+  # More products...
+
+prices:
+  - provider: stripe
+    name: Basic Monthly
+    nickname: Basic Monthly
+    unitAmount: 999
+    currency: usd
+    type: recurring
+    recurring:
+      interval: month
+      intervalCount: 1
+    active: true
+    productKey: basic
+    metadata:
+      displayName: Basic Monthly
+      popular: false
+  # More prices...</code></pre>
+      </section>
+
+      <section>
+        <h2>Customizing After Generation</h2>
+        <p>
+          After generating your template, you should:
+        </p>
+        <ol>
+          <li>Update product names, descriptions, and features to match your actual offerings</li>
+          <li>Adjust pricing to reflect your business model</li>
+          <li>Add any additional metadata relevant to your application</li>
+          <li>Modify or add tiers as needed</li>
+        </ol>
+        <p>
+          The generate feature provides a solid starting point, but you'll want to customize it to fit your specific needs.
+        </p>
+      </section>
+
+      <section>
+        <h2>Next Steps</h2>
+        <p>After generating and customizing your pricing template, you can:</p>
+        <ul>
+          <li><a href="push-model.html">Sync it with your payment provider</a></li>
+          <li><a href="custom-pricing.html">Add custom pricing logic</a></li>
+          <li><a href="metadata.html">Enhance with additional metadata</a></li>
+        </ul>
+      </section>
+    </div>
+  </main>
+
+  <footer>
+    <div class="container">
+      <p>&copy; 2025 Prices as Code. MIT License.</p>
+    </div>
+  </footer>
+  <script src="../assets/js/main.js"></script>
+</body>
+</html>

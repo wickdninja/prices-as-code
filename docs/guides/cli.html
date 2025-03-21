@@ -37,6 +37,39 @@
 
             <p>Prices as Code provides a powerful command-line interface (CLI) that makes it easy to synchronize your pricing configuration with supported payment providers. This guide covers all the CLI features and options.</p>
 
+            <h2>Commands</h2>
+
+            <p>The CLI supports several commands:</p>
+
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Command</th>
+                            <th>Description</th>
+                            <th>Example</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>sync</code> (default)</td>
+                            <td>Synchronize your pricing schema with provider</td>
+                            <td><code>npx prices-as-code config.yml</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>pull</code></td>
+                            <td>Pull pricing from provider into a local config file</td>
+                            <td><code>npx prices-as-code pull config.yml</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>generate</code></td>
+                            <td>Generate a template pricing structure</td>
+                            <td><code>npx prices-as-code generate config.yml</code></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
             <h2>Basic Usage</h2>
 
             <p>The simplest way to use the CLI is to provide the path to your configuration file:</p>
@@ -92,9 +125,9 @@
                             <td><code>npx prices-as-code config.ts --dry-run</code></td>
                         </tr>
                         <tr>
-                            <td><code>--env-file</code></td>
+                            <td><code>--env=&lt;path&gt;</code></td>
                             <td>Specify custom .env file location</td>
-                            <td><code>npx prices-as-code config.ts --env-file ./configs/.env.production</code></td>
+                            <td><code>npx prices-as-code config.ts --env=./configs/.env.production</code></td>
                         </tr>
                         <tr>
                             <td><code>--verbose</code></td>
@@ -102,9 +135,19 @@
                             <td><code>npx prices-as-code config.ts --verbose</code></td>
                         </tr>
                         <tr>
-                            <td><code>--provider</code></td>
-                            <td>Specify a provider (useful when config has multiple providers)</td>
-                            <td><code>npx prices-as-code config.ts --provider stripe</code></td>
+                            <td><code>--format=&lt;format&gt;</code></td>
+                            <td>Output format for pull and generate commands (yaml, json, ts)</td>
+                            <td><code>npx prices-as-code pull --format=ts config.ts</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>--stripe-key=&lt;key&gt;</code></td>
+                            <td>Stripe API key (overrides env var)</td>
+                            <td><code>npx prices-as-code config.ts --stripe-key=sk_test_123</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>--write-back</code></td>
+                            <td>Write provider IDs back to your config file</td>
+                            <td><code>npx prices-as-code config.ts --write-back</code></td>
                         </tr>
                         <tr>
                             <td><code>--help</code></td>
@@ -115,6 +158,49 @@
                             <td><code>--version</code></td>
                             <td>Show version information</td>
                             <td><code>npx prices-as-code --version</code></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <h3>Generate Command Options</h3>
+            
+            <p>The <code>generate</code> command supports additional options to customize the template:</p>
+            
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Option</th>
+                            <th>Description</th>
+                            <th>Example</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>--tiers=&lt;tiers&gt;</code></td>
+                            <td>Comma-separated list of product tiers</td>
+                            <td><code>--tiers=free,basic,pro</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>--currency=&lt;cur&gt;</code></td>
+                            <td>ISO currency code</td>
+                            <td><code>--currency=eur</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>--intervals=&lt;int&gt;</code></td>
+                            <td>Comma-separated list of intervals</td>
+                            <td><code>--intervals=month,year</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>--no-metadata</code></td>
+                            <td>Don't include metadata in generated file</td>
+                            <td><code>--no-metadata</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>--no-features</code></td>
+                            <td>Don't include feature lists in generated products</td>
+                            <td><code>--no-features</code></td>
                         </tr>
                     </tbody>
                 </table>
